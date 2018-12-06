@@ -1,6 +1,6 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Client\Aws;
+namespace Kfz24\QueueBundle\Client\Aws;
 
 use Aws\Result;
 use Aws\Sns\Message;

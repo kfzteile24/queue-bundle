@@ -1,9 +1,9 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Client\Mock;
+namespace Kfz24\QueueBundle\Client\Mock;
 
 use Aws\Result;
-use PetsDeli\QueueBundle\Client\ClientInterface;
+use Kfz24\QueueBundle\Client\ClientInterface;
 
 class MockClient implements ClientInterface
 {

@@ -1,9 +1,9 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Client\Aws;
+namespace Kfz24\QueueBundle\Client\Aws;
 
 use Aws\AwsClientInterface;
-use PetsDeli\QueueBundle\Client\ClientInterface;
+use Kfz24\QueueBundle\Client\ClientInterface;
 
 abstract class AbstractAwsClient implements ClientInterface
 {

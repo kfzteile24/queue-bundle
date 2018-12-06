@@ -1,6 +1,6 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Client;
+namespace Kfz24\QueueBundle\Client;
 
 use Aws\Result;
 

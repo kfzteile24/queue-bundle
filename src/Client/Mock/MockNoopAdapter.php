@@ -1,6 +1,6 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Client\Mock;
+namespace Kfz24\QueueBundle\Client\Mock;
 
 /**
  * @method mixed send(array $args = [])

@@ -1,6 +1,6 @@
 <?php
 
-namespace PetsDeli\QueueBundle\DependencyInjection;
+namespace Kfz24\QueueBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -18,7 +18,7 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('pets_deli_queue');
+        $rootNode = $treeBuilder->root('kfz24_queue');
 
         $rootNode
             ->info('Queue configuration')

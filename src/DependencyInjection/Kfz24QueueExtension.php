@@ -1,6 +1,6 @@
 <?php
 
-namespace PetsDeli\QueueBundle\DependencyInjection;
+namespace Kfz24\QueueBundle\DependencyInjection;
 
 use Aws\Sns\MessageValidator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\Loader;
  *
  * @link http://symfony.com/doc/current/cookbook/bundles/extension.html
  */
-class PetsDeliQueueExtension extends Extension
+class Kfz24QueueExtension extends Extension
 {
     /**
      * {@inheritdoc}
@@ -29,15 +29,15 @@ class PetsDeliQueueExtension extends Extension
         $loader->load('services.xml');
 
         $snsValidatorDefinition = new Definition(MessageValidator::class);
-        $snsValidatorDefinitionName = 'petsdeli.queue.message_validator';
+        $snsValidatorDefinitionName = 'kfz24.queue.message_validator';
         $container->setDefinition($snsValidatorDefinitionName, $snsValidatorDefinition);
 
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
 
-            $apiVersion = $container->getParameter(sprintf('petsdeli.queue.%s.api_version', $clientType));
-            $adapterClass = $container->getParameter(sprintf('petsdeli.queue.%s.adapter.class', $clientType));
-            $clientClass = $container->getParameter(sprintf('petsdeli.queue.%s.client.class', $clientType));
+            $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
+            $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
+            $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
             $adapterDefinition = new Definition($adapterClass, [
                 [
@@ -52,12 +52,12 @@ class PetsDeliQueueExtension extends Extension
             ]);
             $adapterDefinition->setPublic(false);
 
-            $adapterDefinitionName = sprintf('petsdeli.queue.adapter.%s', $name);
+            $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
             $container->setDefinition($adapterDefinitionName, $adapterDefinition);
 
             $queueClientDefinition = new Definition($clientClass);
             $queueClientDefinition
-                ->addTag('petsdeli.queue.client')
+                ->addTag('kfz24.queue.client')
                 ->addArgument(new Reference($adapterDefinitionName))
                 ->addArgument($client['resource']);
 
@@ -65,7 +65,7 @@ class PetsDeliQueueExtension extends Extension
                 $queueClientDefinition->addMethodCall('setValidator', [new Reference($snsValidatorDefinitionName)]);
             }
 
-            $queueClientDefinitionName = sprintf('petsdeli.queue.client.%s', $name);
+            $queueClientDefinitionName = sprintf('kfz24.queue.client.%s', $name);
             $container->setDefinition($queueClientDefinitionName, $queueClientDefinition);
         }
     }
