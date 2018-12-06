@@ -1,28 +1,28 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Tests\DependencyInjection;
+namespace Kfz24\QueueBundle\Tests\DependencyInjection;
 
-use PetsDeli\QueueBundle\Client\Aws\SnsClient;
-use PetsDeli\QueueBundle\Client\Aws\SqsClient;
-use PetsDeli\QueueBundle\Client\Mock\MockClient;
-use PetsDeli\QueueBundle\DependencyInjection\PetsDeliQueueExtension;
+use Kfz24\QueueBundle\Client\Aws\SnsClient;
+use Kfz24\QueueBundle\Client\Aws\SqsClient;
+use Kfz24\QueueBundle\Client\Mock\MockClient;
+use Kfz24\QueueBundle\DependencyInjection\Kfz24QueueExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class PetsDeliQueueExtensionTest extends \PHPUnit_Framework_TestCase
+class Kfz24QueueExtensionTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var ContainerBuilder
      */
     private $container;
     /**
-     * @var PetsDeliQueueExtension
+     * @var Kfz24QueueExtension
      */
     private $extension;
 
     public function setUp()
     {
         $this->container = new ContainerBuilder();
-        $this->extension = new PetsDeliQueueExtension();
+        $this->extension = new Kfz24QueueExtension();
     }
 
     /**
@@ -33,25 +33,25 @@ class PetsDeliQueueExtensionTest extends \PHPUnit_Framework_TestCase
     public function testTaggedService($config)
     {
         $this->extension->load([$config], $this->container);
-        $this->assertEquals(count($config['clients']), count($this->container->findTaggedServiceIds('petsdeli.queue.client')));
+        $this->assertEquals(count($config['clients']), count($this->container->findTaggedServiceIds('kfz24.queue.client')));
     }
 
     public function testSnsClientSetup()
     {
         $this->extension->load([['clients' => ['sns' => $this->getValidSnsConfiguration()]]], $this->container);
-        $this->assertInstanceOf(SnsClient::class, $this->container->get('petsdeli.queue.client.sns'));
+        $this->assertInstanceOf(SnsClient::class, $this->container->get('kfz24.queue.client.sns'));
     }
 
     public function testSqsClientSetup()
     {
         $this->extension->load([['clients' => ['sqs' => $this->getValidSqsConfiguration()]]], $this->container);
-        $this->assertInstanceOf(SqsClient::class, $this->container->get('petsdeli.queue.client.sqs'));
+        $this->assertInstanceOf(SqsClient::class, $this->container->get('kfz24.queue.client.sqs'));
     }
 
     public function testMockClientSetup()
     {
         $this->extension->load([['clients' => ['mock' => $this->getValidMockConfiguration()]]], $this->container);
-        $this->assertInstanceOf(MockClient::class, $this->container->get('petsdeli.queue.client.mock'));
+        $this->assertInstanceOf(MockClient::class, $this->container->get('kfz24.queue.client.mock'));
     }
 
     /**

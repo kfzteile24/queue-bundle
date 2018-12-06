@@ -1,9 +1,9 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Tests\Client\Mock;
+namespace Kfz24\QueueBundle\Tests\Client\Mock;
 
-use PetsDeli\QueueBundle\Client\Mock\MockClient;
-use PetsDeli\QueueBundle\Client\Mock\MockNoopAdapter;
+use Kfz24\QueueBundle\Client\Mock\MockClient;
+use Kfz24\QueueBundle\Client\Mock\MockNoopAdapter;
 
 class MockClientTest extends \PHPUnit_Framework_TestCase
 {

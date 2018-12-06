@@ -1,11 +1,11 @@
 <?php
 
-namespace PetsDeli\QueueBundle\Tests\Client\Aws;
+namespace Kfz24\QueueBundle\Tests\Client\Aws;
 
 use Aws\AwsClient;
 use Aws\Result;
 use Aws\Sns\MessageValidator;
-use PetsDeli\QueueBundle\Client\Aws\SqsClient;
+use Kfz24\QueueBundle\Client\Aws\SqsClient;
 
 class SqsClientTest extends \PHPUnit_Framework_TestCase
 {

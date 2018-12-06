@@ -1,9 +1,9 @@
 {
-    "name": "petsdeli/queue-bundle",
+    "name": "kfzteile24/queue-bundle",
     "description": "Provides an abstraction on top of AWS' PHP SDK Sqs- and SnsClient to make it DI friendly.",
     "license": "MIT",
     "type": "symfony-bundle",
-    "homepage": "https://github.com/pets-deli/queue-bundle",
+    "homepage": "https://github.com/kfzteile24/queue-bundle",
     "keywords": [
         "aws",
         "sqs",
@@ -12,18 +12,18 @@
     ],
     "authors": [
         {
-            "email": "klaus.grossmann@petsdeli.de",
-            "name": "Klaus Großmann"
+            "email": "jacopo.melloni@project-a.com",
+            "name": "Jacopo Melloni"
         }
     ],
     "autoload": {
         "psr-4": {
-            "PetsDeli\\QueueBundle\\": "src/"
+            "Kfz24\\QueueBundle\\": "src/Kfz24"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "PetsDeli\\QueueBundle\\Tests\\": "tests/"
+            "Kfz24\\QueueBundle\\Tests\\": "tests/"
         }
     },
     "require": {

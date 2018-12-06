@@ -3,12 +3,14 @@ QueueBundle
 
 [![CircleCI](https://circleci.com/gh/pets-deli/queue-bundle/tree/develop.svg?style=shield)](https://circleci.com/gh/pets-deli/queue-bundle/tree/develop)
 
+This Bundle has been created by refactoring the petsdeli/queue-bundle 
+
 ## Installation
 
 1. Run the following command to install the bundle
 
 ```bash
-composer require petsdeli/queue-bundle
+composer require kfzteile24/queue-bundle
 ```
 
 2. Configure the clients you want to use in your application 
@@ -16,7 +18,7 @@ composer require petsdeli/queue-bundle
 ```yaml
 # app/config/config.yml
 
-pets_deli_queue:
+kfz24_queue:
     clients:
         notify:
             type:              "sns"
@@ -43,8 +45,8 @@ pets_deli_queue:
 Get your configured services from the container
 
 ```php
-/** @var \PetsDeli\QueueBundle\Client\Aws\SnsClient $client */
-$client = $container->get('petsdeli.queue.client.notify');
+/** @var \Kfz24\QueueBundle\Client\Aws\SnsClient $client */
+$client = $container->get('kfz24.queue.client.notify');
 
 $client->send([
     'type' => 'notification', 
@@ -56,7 +58,7 @@ or inject them in your services as you see fit.
 
 ```xml
     <service id="app.consumer_command" class="AppBundle\Command\Consumer">
-        <argument type="service" id="petsdeli.queue.client.one_consumer" />
+        <argument type="service" id="kfz24.queue.client.one_consumer" />
         
         <tag name="console.command" />
     </service>
