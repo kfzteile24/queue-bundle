@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="petsdeli.queue.sqs.client.class">PetsDeli\QueueBundle\Client\Aws\SqsClient</parameter>
+        <parameter key="petsdeli.queue.sqs.adapter.class">Aws\Sqs\SqsClient</parameter>
+        <parameter key="petsdeli.queue.sqs.api_version">2012-11-05</parameter>
+
+        <parameter key="petsdeli.queue.sns.client.class">PetsDeli\QueueBundle\Client\Aws\SnsClient</parameter>
+        <parameter key="petsdeli.queue.sns.adapter.class">Aws\Sns\SnsClient</parameter>
+        <parameter key="petsdeli.queue.sns.api_version">2010-03-31</parameter>
+
+        <parameter key="petsdeli.queue.mock.client.class">PetsDeli\QueueBundle\Client\Mock\MockClient</parameter>
+        <parameter key="petsdeli.queue.mock.adapter.class">PetsDeli\QueueBundle\Client\Mock\MockNoopAdapter</parameter>
+        <parameter key="petsdeli.queue.mock.api_version">1</parameter>
+    </parameters>
+</container>

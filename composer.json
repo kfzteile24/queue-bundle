@@ -1,0 +1,42 @@
+{
+    "name": "petsdeli/queue-bundle",
+    "description": "Provides an abstraction on top of AWS' PHP SDK Sqs- and SnsClient to make it DI friendly.",
+    "license": "MIT",
+    "type": "symfony-bundle",
+    "homepage": "https://github.com/pets-deli/queue-bundle",
+    "keywords": [
+        "aws",
+        "sqs",
+        "sns",
+        "queue"
+    ],
+    "authors": [
+        {
+            "email": "klaus.grossmann@petsdeli.de",
+            "name": "Klaus Großmann"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "PetsDeli\\QueueBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PetsDeli\\QueueBundle\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "~7.0",
+        "aws/aws-sdk-php": "^3.19",
+        "aws/aws-php-sns-message-validator": "~1.1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~5.7.5",
+        "symfony/config": "~3.2.0",
+        "symfony/dependency-injection": "~3.2.0",
+        "symfony/http-kernel": "~3.2.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

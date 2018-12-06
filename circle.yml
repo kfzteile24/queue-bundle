@@ -1,0 +1,14 @@
+## Customize the test machine
+machine:
+    php:
+        version: 7.0.4
+
+## Customize test commands
+test:
+    override:
+        - mkdir -p $CIRCLE_TEST_REPORTS/phpunit
+        - vendor/bin/phpunit --log-junit $CIRCLE_TEST_REPORTS/phpunit/junit.xml
+
+dependencies:
+    cache_directories:
+        - "vendor"
