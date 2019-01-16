@@ -76,22 +76,21 @@ class SqsClient extends AbstractAwsClient
 
     /**
      * @param array $args
-     * @param bool $validateSignature
      *
      * @return Result
      */
-    public function receive(array $args = [], bool $validateSignature = true)
+    public function receive(array $args = [])
     {
         $response = $this->receiveMessage($args);
         $messages = $response['Messages'];
 
         if (null !== $messages) {
             $messages = array_map(
-                function ($message) use ($validateSignature) {
+                function ($message) {
                     $body = json_decode($message['Body'], true);
 
                     if (JSON_ERROR_NONE === json_last_error() && is_array($body)) {
-                        $message['Body'] = $this->handleSnsMessageBody($body, $validateSignature);
+                        $message['Body'] = $this->handleSnsMessageBody($body);
                     }
 
                     return $message;
@@ -110,7 +109,7 @@ class SqsClient extends AbstractAwsClient
      *
      * @return string
      */
-    private function handleSnsMessageBody(array $body, bool $validateSignature)
+    private function handleSnsMessageBody(array $body)
     {
         // determining whether this is originally a SNS message by loading it
         // into a model which is checking for the presence of keys unique to
@@ -119,7 +118,7 @@ class SqsClient extends AbstractAwsClient
             $message = new Message($body);
 
             // if message is legit and valid unfold the body to get rid of the envelop
-            if (!$validateSignature || (null !== $this->validator && $this->validator->isValid($message))) {
+            if (null !== $this->validator && $this->validator->isValid($message)) {
                 return $body['Message'];
             }
         } catch (\InvalidArgumentException $e) {
