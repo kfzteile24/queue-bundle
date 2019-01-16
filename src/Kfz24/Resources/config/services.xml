@@ -17,4 +17,11 @@
         <parameter key="kfz24.queue.mock.adapter.class">Kfz24\QueueBundle\Client\Mock\MockNoopAdapter</parameter>
         <parameter key="kfz24.queue.mock.api_version">1</parameter>
     </parameters>
+
+    <services>
+        <service id="kfz24.queue.message_validator" class="Aws\Sns\MessageValidator">
+            <argument type="service" id="kfz24.aws.cached_cert_client"/>
+        </service>
+        <service id="kfz24.aws.cached_cert_client" class="Kfz24\QueueBundle\Client\Aws\CachedCertClient"/>
+    </services>
 </container>

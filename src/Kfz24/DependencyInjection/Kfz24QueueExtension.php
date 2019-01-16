@@ -2,7 +2,6 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
-use Aws\Sns\MessageValidator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Definition;
@@ -28,9 +27,6 @@ class Kfz24QueueExtension extends Extension
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.xml');
 
-        $snsValidatorDefinition = new Definition(MessageValidator::class);
-        $snsValidatorDefinitionName = 'kfz24.queue.message_validator';
-        $container->setDefinition($snsValidatorDefinitionName, $snsValidatorDefinition);
 
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
@@ -62,7 +58,7 @@ class Kfz24QueueExtension extends Extension
                 ->addArgument($client['resource']);
 
             if ($clientType === 'sqs') {
-                $queueClientDefinition->addMethodCall('setValidator', [new Reference($snsValidatorDefinitionName)]);
+                $queueClientDefinition->addMethodCall('setValidator', [new Reference('kfz24.queue.message_validator')]);
             }
 
             $queueClientDefinitionName = sprintf('kfz24.queue.client.%s', $name);
