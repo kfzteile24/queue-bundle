@@ -5,6 +5,7 @@ namespace Kfz24\QueueBundle\Client\Aws;
 use Aws\Result;
 use Aws\Sns\Message;
 use Aws\Sns\MessageValidator;
+use Psr\Log\LoggerInterface;
 
 /**
  * @method \Aws\Result addPermission(array $args = [])
@@ -52,11 +53,24 @@ class SqsClient extends AbstractAwsClient
     private $validator;
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @param MessageValidator $validator
      */
     public function setValidator(MessageValidator $validator)
     {
         $this->validator = $validator;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 
     /**
@@ -83,23 +97,23 @@ class SqsClient extends AbstractAwsClient
     {
         $result = $this->receiveMessage($args);
         $messages = $result['Messages'];
+        $handledMessages = [];
 
         if (null !== $messages) {
-            $messages = array_map(
-                function ($message) {
-                    $body = json_decode($message['Body'], true);
+            foreach ($messages as $message) {
+                $body = json_decode($message['Body'], true);
 
-                    if (JSON_ERROR_NONE === json_last_error() && is_array($body)) {
-                        $message['Body'] = $this->handleSnsMessageBody($body);
-                    }
+                if (JSON_ERROR_NONE === json_last_error() && is_array($body)) {
+                    $message['Body'] = $this->handleSnsMessageBody($body);
+                }
 
-                    return $message;
-                },
-                $messages
-            );
-
-            $result['Messages'] = $messages;
+                if ($message['Body'] !== null) {
+                    $handledMessages[] = $message;
+                }
+            }
         }
+
+        $result['Messages'] = $handledMessages;
 
         return $result;
     }
@@ -107,9 +121,9 @@ class SqsClient extends AbstractAwsClient
     /**
      * @param array $body
      *
-     * @return string
+     * @return string|null
      */
-    private function handleSnsMessageBody(array $body)
+    private function handleSnsMessageBody(array $body): ?string
     {
         // determining whether this is originally a SNS message by loading it
         // into a model which is checking for the presence of keys unique to
@@ -117,9 +131,17 @@ class SqsClient extends AbstractAwsClient
         try {
             $message = new Message($body);
 
-            // if message is legit and valid unfold the body to get rid of the envelop
-            if (null !== $this->validator && $this->validator->isValid($message)) {
-                return $body['Message'];
+            if (null !== $this->validator) {
+                // if message is legit and valid unfold the body to get rid of the envelop
+                if ($this->validator->isValid($message)) {
+                    return $body['Message'];
+                }
+
+                if ($this->logger) {
+                    $this->logger->warning(sprintf('Message %s failed SSL validation', $message['MessageId']));
+                }
+
+                return null;
             }
         } catch (\InvalidArgumentException $e) {
             // the constructor of the Message class throws the exception if the passed

@@ -27,7 +27,7 @@
         }
     },
     "require": {
-        "php": "~7.0",
+        "php": "^7.1",
         "aws/aws-sdk-php": "^3.19",
         "aws/aws-php-sns-message-validator": "~1.1.0"
     },
