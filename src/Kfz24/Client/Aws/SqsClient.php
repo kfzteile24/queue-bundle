@@ -81,8 +81,8 @@ class SqsClient extends AbstractAwsClient
      */
     public function receive(array $args = [])
     {
-        $response = $this->receiveMessage($args);
-        $messages = $response['Messages'];
+        $result = $this->receiveMessage($args);
+        $messages = $result['Messages'];
 
         if (null !== $messages) {
             $messages = array_map(
@@ -98,10 +98,10 @@ class SqsClient extends AbstractAwsClient
                 $messages
             );
 
-            $response['Messages'] = $messages;
+            $result['Messages'] = $messages;
         }
 
-        return $response;
+        return $result;
     }
 
     /**
