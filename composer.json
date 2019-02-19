@@ -30,7 +30,7 @@
         "php": "^7.1",
         "aws/aws-sdk-php": "^3.19",
         "aws/aws-php-sns-message-validator": "~1.1.0",
-        "ext-json": "^1.6",
+        "ext-json": "^1.5",
         "ramsey/uuid": "^3.8"
     },
     "require-dev": {
