@@ -27,7 +27,6 @@ class Kfz24QueueExtension extends Extension
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.xml');
 
-
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
 
