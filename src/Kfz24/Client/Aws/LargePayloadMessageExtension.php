@@ -57,8 +57,7 @@ class LargePayloadMessageExtension
      */
     public function isMessageLarge(array $message): bool
     {
-        $encodedMessage = json_encode($message);
-        $messageSizeInBytes = strlen($encodedMessage);
+        $messageSizeInBytes = strlen($message['MessageBody']);
 
         if ($messageSizeInBytes < ($this->largeMessageSizeThreshold * 1024)) {
             return false;
@@ -94,7 +93,7 @@ class LargePayloadMessageExtension
 
         $result = $this->s3Client->putObject([
             'Key' => $key,
-            'Body' => json_encode($message)
+            'Body' => $message['MessageBody']
         ]);
 
         $bucketName = (string) $result->get('Bucket') ?? '';

@@ -2,6 +2,8 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
+use Aws\S3\S3Client;
+use Kfz24\QueueBundle\Client\Aws\LargePayloadMessageExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Definition;
@@ -58,10 +60,71 @@ class Kfz24QueueExtension extends Extension
 
             if ($clientType === 'sqs') {
                 $queueClientDefinition->addMethodCall('setValidator', [new Reference('kfz24.queue.message_validator')]);
+
+                if (isset($client['large_payload_client'])) {
+                    $s3DefinitionName = sprintf('kfz24.queue.s3client.%s', $name);
+                    $largePayloadMessageExtensionDefinitionName = sprintf('kfz24.queue.large_payload_message_extension.%s', $name);
+
+                    $this->buildS3ClientDefinition(
+                        $s3DefinitionName,
+                        $client['large_payload_client'],
+                        $container
+                    );
+
+                    $this->buildLargePayloadMessageExtensionDefinition(
+                        $largePayloadMessageExtensionDefinitionName,
+                        $s3DefinitionName,
+                        $container
+                    );
+
+                    $queueClientDefinition->addMethodCall(
+                        'setLargePayloadMessageExtension',
+                        [new Reference($largePayloadMessageExtensionDefinitionName)]
+                    );
+                }
             }
 
             $queueClientDefinitionName = sprintf('kfz24.queue.client.%s', $name);
             $container->setDefinition($queueClientDefinitionName, $queueClientDefinition);
         }
+    }
+
+    /**
+     * @param string $definitionName
+     * @param string $s3ClientDefinitionName
+     * @param ContainerBuilder $container
+     */
+    private function buildLargePayloadMessageExtensionDefinition(
+        string $definitionName,
+        string $s3ClientDefinitionName,
+        ContainerBuilder $container
+    ): void {
+        $largePayloadMessageExtensionDefinition = new Definition(LargePayloadMessageExtension::class, [
+            new Reference($s3ClientDefinitionName)
+        ]);
+
+        $container->setDefinition($definitionName, $largePayloadMessageExtensionDefinition);
+    }
+
+    /**
+     * @param string $definitionName
+     * @param array $config
+     * @param ContainerBuilder $container
+     */
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container): void
+    {
+        $s3ClientDefinition = new Definition(S3Client::class, [
+            [
+                'region' => $config['region'],
+                'endpoint' => $config['endpoint'],
+                'credentials' => [
+                    'key' => $config['access_key'],
+                    'secret' => $config['secret_access_key']
+                ],
+                'version' => '2006-03-01',
+            ],
+        ]);
+
+        $container->setDefinition($definitionName, $s3ClientDefinition);
     }
 }

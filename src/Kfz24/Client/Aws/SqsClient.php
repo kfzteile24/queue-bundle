@@ -73,7 +73,12 @@ class SqsClient extends AbstractAwsClient
     public function send($message)
     {
         if (!is_array($message) || !array_key_exists('MessageBody', $message)) {
-            $message = ['MessageBody' => json_encode($message)];
+            if (is_string($message) && $this->isJsonString($message)) {
+                $message = ['MessageBody' => $message];
+            }
+            else {
+                $message = ['MessageBody' => json_encode($message)];
+            }
         }
 
         if (
@@ -159,5 +164,17 @@ class SqsClient extends AbstractAwsClient
         }
 
         return json_encode($body);
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return bool
+     */
+    private function isJsonString(string $message): bool
+    {
+        json_decode($message);
+
+        return (json_last_error() === JSON_ERROR_NONE);
     }
 }
