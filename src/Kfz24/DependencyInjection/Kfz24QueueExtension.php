@@ -125,7 +125,7 @@ class Kfz24QueueExtension extends Extension
                     'key' => $config['access_key'],
                     'secret' => $config['secret_access_key']
                 ],
-                'use_path_style_endpoint' => $config['use_path_style_endpoint'],
+                'use_path_style_endpoint' => ($config['use_path_style_endpoint'] === 'true'),
                 'version' => '2006-03-01',
             ],
         ]);
