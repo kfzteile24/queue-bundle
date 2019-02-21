@@ -64,7 +64,7 @@ class Configuration implements ConfigurationInterface
                                     ->scalarNode('secret_access_key')
                                         ->isRequired()
                                     ->end()
-                                    ->boolean('use_path_style_endpoint')
+                                    ->booleanNode('use_path_style_endpoint')
                                         ->defaultFalse()
                                     ->end()
                                 ->end()
