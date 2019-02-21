@@ -74,6 +74,7 @@ class Kfz24QueueExtension extends Extension
                     $this->buildLargePayloadMessageExtensionDefinition(
                         $largePayloadMessageExtensionDefinitionName,
                         $s3DefinitionName,
+                        $client['large_payload_client']['bucket'],
                         $container
                     );
 
@@ -92,15 +93,18 @@ class Kfz24QueueExtension extends Extension
     /**
      * @param string $definitionName
      * @param string $s3ClientDefinitionName
+     * @param string $bucketName
      * @param ContainerBuilder $container
      */
     private function buildLargePayloadMessageExtensionDefinition(
         string $definitionName,
         string $s3ClientDefinitionName,
+        string $bucketName,
         ContainerBuilder $container
     ): void {
         $largePayloadMessageExtensionDefinition = new Definition(LargePayloadMessageExtension::class, [
-            new Reference($s3ClientDefinitionName)
+            new Reference($s3ClientDefinitionName),
+            $bucketName
         ]);
 
         $container->setDefinition($definitionName, $largePayloadMessageExtensionDefinition);

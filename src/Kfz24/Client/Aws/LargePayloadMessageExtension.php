@@ -17,16 +17,23 @@ class LargePayloadMessageExtension
     private $s3Client;
 
     /**
+     * @var string
+     */
+    private $bucketName;
+
+    /**
      * @var int
      */
     private $largeMessageSizeThreshold;
 
     /**
      * @param S3Client $s3Client
+     * @param string $bucketName
      */
-    public function __construct(S3Client $s3Client)
+    public function __construct(S3Client $s3Client, string $bucketName)
     {
         $this->s3Client = $s3Client;
+        $this->bucketName = $bucketName;
         $this->largeMessageSizeThreshold = self::DEFAULT_LARGE_MESSAGE_SIZE_THRESHOLD;
     }
 
@@ -91,15 +98,14 @@ class LargePayloadMessageExtension
     {
         $key = sprintf('%s.json', Uuid::uuid4());
 
-        $result = $this->s3Client->putObject([
+        $this->s3Client->putObject([
+            'Bucket' => $this->bucketName,
             'Key' => $key,
             'Body' => $message['MessageBody']
         ]);
 
-        $bucketName = (string) $result->get('Bucket') ?? '';
-
         $messageS3Pointer = new MessageS3Pointer();
-        $messageS3Pointer->setS3BucketName($bucketName);
+        $messageS3Pointer->setS3BucketName($this->bucketName);
         $messageS3Pointer->setS3Key($key);
 
         return $messageS3Pointer;

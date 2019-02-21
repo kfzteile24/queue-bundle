@@ -72,7 +72,16 @@ class SqsClient extends AbstractAwsClient
      */
     public function send($message)
     {
-        if (!is_array($message) || !array_key_exists('MessageBody', $message)) {
+        if (is_array($message)) {
+            if (!array_key_exists('MessageBody', $message)) {
+                $message = ['MessageBody' => json_encode($message)];
+            }
+            else if (is_array($message['MessageBody'])) {
+                $message['MessageBody'] = json_encode($message['MessageBody']);
+            }
+        }
+
+        if (!is_array($message)) {
             if (is_string($message) && $this->isJsonString($message)) {
                 $message = ['MessageBody' => $message];
             }
