@@ -47,6 +47,7 @@ class Configuration implements ConfigurationInterface
                                 ->isRequired()
                             ->end()
                             ->arrayNode('large_payload_client')
+                                ->canBeEnabled()
                                 ->children()
                                     ->scalarNode('region')
                                         ->isRequired()

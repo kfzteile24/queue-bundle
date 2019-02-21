@@ -61,7 +61,7 @@ class Kfz24QueueExtension extends Extension
             if ($clientType === 'sqs') {
                 $queueClientDefinition->addMethodCall('setValidator', [new Reference('kfz24.queue.message_validator')]);
 
-                if (isset($client['large_payload_client'])) {
+                if ($client['large_payload_client']['enabled']) {
                     $s3DefinitionName = sprintf('kfz24.queue.s3client.%s', $name);
                     $largePayloadMessageExtensionDefinitionName = sprintf('kfz24.queue.large_payload_message_extension.%s', $name);
 
