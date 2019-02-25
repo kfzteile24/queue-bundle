@@ -158,8 +158,8 @@ class SqsClient extends AbstractAwsClient
         $promise = parent::deleteMessageBatchAsync($args);
 
         if ($this->largePayloadMessageExtension !== null && isset($args['Entries'])) {
-            foreach ($args['Entries'] as $receiptHandle) {
-                $this->largePayloadMessageExtension->deleteMessageFromS3($receiptHandle);
+            foreach ($args['Entries'] as $receipt) {
+                $this->largePayloadMessageExtension->deleteMessageFromS3($receipt['ReceiptHandle']);
             }
         }
 
