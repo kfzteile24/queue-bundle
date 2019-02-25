@@ -10,6 +10,8 @@ use Ramsey\Uuid\Uuid;
 class LargePayloadMessageExtension
 {
     private const DEFAULT_LARGE_MESSAGE_SIZE_THRESHOLD = 250;
+    private const S3_BUCKET_NAME_MARKER = '-..s3BucketName..-';
+    private const S3_KEY_MARKER = '-..s3Key..-';
 
     /**
      * @var S3Client
@@ -127,6 +129,22 @@ class LargePayloadMessageExtension
     }
 
     /**
+     * @param string $receiptHandle
+     *
+     * @return void
+     */
+    public function deleteMessageFromS3(string $receiptHandle): void
+    {
+        $bucketName = $this->getS3BucketNameFromReceiptHandle($receiptHandle);
+        $key = $this->getS3KeyFromReceiptHandle($receiptHandle);
+
+        $this->s3Client->deleteObject([
+            'Bucket' => $bucketName,
+            'Key' => $key
+        ]);
+    }
+
+    /**
      * @param array $messageBody
      *
      * @return MessageS3Pointer|null
@@ -142,5 +160,86 @@ class LargePayloadMessageExtension
         $messageS3Pointer->setS3Key($messageBody['s3_key']);
 
         return $messageS3Pointer;
+    }
+
+    /**
+     * @param string $receiptHandle
+     * @param MessageS3Pointer $messageS3Pointer
+     *
+     * @return string
+     */
+    public function embedS3PointerInReceiptHandle(string $receiptHandle, MessageS3Pointer $messageS3Pointer): string
+    {
+        $embeddedBucketName = self::S3_BUCKET_NAME_MARKER . $messageS3Pointer->getS3BucketName() . self::S3_BUCKET_NAME_MARKER;
+        $embeddedKey = self::S3_KEY_MARKER . $messageS3Pointer->getS3Key() . self::S3_KEY_MARKER;
+
+        $modifiedReceiptHandle =  $embeddedBucketName . $embeddedKey . $receiptHandle;
+
+        return $modifiedReceiptHandle;
+    }
+
+    /**
+     * @param string $receiptHandle
+     *
+     * @return bool
+     */
+    public function isS3ReceiptHandle(string $receiptHandle): bool
+    {
+        $containsBucketName = strpos($receiptHandle, self::S3_BUCKET_NAME_MARKER) !== false;
+        $containsKey = strpos($receiptHandle, self::S3_KEY_MARKER) !== false;
+
+        return ($containsBucketName && $containsKey);
+    }
+
+    /**
+     * @param string $receiptHandle
+     *
+     * @return string
+     */
+    public function getOriginalReceiptHandle(string $receiptHandle): string
+    {
+        $keyMarkerFirstOccurence = strpos($receiptHandle, self::S3_KEY_MARKER);
+        $keyMarkerSecondOccurence = strpos($receiptHandle, self::S3_KEY_MARKER, $keyMarkerFirstOccurence + 1);
+        $embeddedInformationEnding = $keyMarkerSecondOccurence + strlen(self::S3_KEY_MARKER);
+
+        return substr($receiptHandle, $embeddedInformationEnding);
+    }
+
+    /**
+     * @param string $receiptHandle
+     *
+     * @return string
+     */
+    public function getS3BucketNameFromReceiptHandle(string $receiptHandle): string
+    {
+        return $this->getFromReceiptHandleByMarker($receiptHandle, self::S3_BUCKET_NAME_MARKER);
+    }
+
+    /**
+     * @param string $receiptHandle
+     *
+     * @return string
+     */
+    public function getS3KeyFromReceiptHandle(string $receiptHandle): string
+    {
+        return $this->getFromReceiptHandleByMarker($receiptHandle, self::S3_KEY_MARKER);
+    }
+
+    /**
+     * @param string $receiptHandle
+     * @param string $marker
+     *
+     * @return string
+     */
+    private function getFromReceiptHandleByMarker(string $receiptHandle, string $marker): string
+    {
+        $markerFirstOccurrence = strpos($receiptHandle, $marker);
+        $markerSecondOccurrence = strpos($receiptHandle, $marker, $markerFirstOccurrence + 1);
+
+        $markerLength = strlen($marker);
+        $informationBeginning = $markerFirstOccurrence + $markerLength;
+        $informationEnding = $markerSecondOccurrence - $informationBeginning;
+
+        return substr($receiptHandle, $informationBeginning, $informationEnding);
     }
 }

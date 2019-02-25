@@ -5,6 +5,7 @@ namespace Kfz24\QueueBundle\Client\Aws;
 use Aws\Result;
 use Aws\Sns\Message;
 use Aws\Sns\MessageValidator;
+use GuzzleHttp\Promise\Promise;
 use Psr\Log\LoggerInterface;
 
 class SqsClient extends AbstractAwsClient
@@ -128,6 +129,10 @@ class SqsClient extends AbstractAwsClient
 
                     if ($messageS3Pointer !== null) {
                         $message['Body'] = $this->largePayloadMessageExtension->fetchMessageFromS3($messageS3Pointer);
+                        $message['ReceiptHandle'] = $this->largePayloadMessageExtension->embedS3PointerInReceiptHandle(
+                            $message['ReceiptHandle'],
+                            $messageS3Pointer
+                        );
                     }
                 }
 
@@ -140,6 +145,25 @@ class SqsClient extends AbstractAwsClient
         $result['Messages'] = $handledMessages;
 
         return $result;
+    }
+
+    /**
+     * @param array $args
+     *
+     * @return Promise
+     */
+    public function deleteMessageBatchAsync(array $args = []): Promise
+    {
+        /** @noinspection PhpUndefinedMethodInspection */
+        $promise = parent::deleteMessageBatchAsync($args);
+
+        if ($this->largePayloadMessageExtension !== null && isset($args['Entries'])) {
+            foreach ($args['Entries'] as $receiptHandle) {
+                $this->largePayloadMessageExtension->deleteMessageFromS3($receiptHandle);
+            }
+        }
+
+        return $promise;
     }
 
     /**
