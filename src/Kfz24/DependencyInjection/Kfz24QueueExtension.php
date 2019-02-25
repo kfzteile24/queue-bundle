@@ -117,6 +117,11 @@ class Kfz24QueueExtension extends Extension
      */
     private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container): void
     {
+        $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
+            $config['use_path_style_endpoint'],
+            true
+        );
+
         $s3ClientDefinition = new Definition(S3Client::class, [
             [
                 'region' => $config['region'],
@@ -125,7 +130,7 @@ class Kfz24QueueExtension extends Extension
                     'key' => $config['access_key'],
                     'secret' => $config['secret_access_key']
                 ],
-                'use_path_style_endpoint' => ($config['use_path_style_endpoint'] === 'true'),
+                'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
                 'version' => '2006-03-01',
             ],
         ]);
