@@ -125,7 +125,7 @@ class SqsClient extends AbstractAwsClient
 
                 if ($this->largePayloadMessageExtension !== null) {
                     $messageS3Pointer = $this->largePayloadMessageExtension
-                        ->messageS3PointerFromMessageBody((array) $message['Body']);
+                        ->messageS3PointerFromMessageBody(json_decode($message['Body'], true));
 
                     if ($messageS3Pointer !== null) {
                         $message['Body'] = $this->largePayloadMessageExtension->fetchMessageFromS3($messageS3Pointer);
