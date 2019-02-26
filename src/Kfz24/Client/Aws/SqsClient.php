@@ -77,7 +77,7 @@ class SqsClient extends AbstractAwsClient
             if (!array_key_exists('MessageBody', $message)) {
                 $message = ['MessageBody' => json_encode($message)];
             }
-            else if (is_array($message['MessageBody'])) {
+            else if (is_array($message['MessageBody']) || is_object($message['MessageBody'])) {
                 $message['MessageBody'] = json_encode($message['MessageBody']);
             }
         }
