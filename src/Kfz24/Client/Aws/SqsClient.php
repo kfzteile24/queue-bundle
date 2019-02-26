@@ -154,16 +154,34 @@ class SqsClient extends AbstractAwsClient
      */
     public function deleteMessageBatchAsync(array $args = []): Promise
     {
-        /** @noinspection PhpUndefinedMethodInspection */
-        $promise = parent::deleteMessageBatchAsync($args);
-
-        if ($this->largePayloadMessageExtension !== null && isset($args['Entries'])) {
-            foreach ($args['Entries'] as $receipt) {
-                $this->largePayloadMessageExtension->deleteMessageFromS3($receipt['ReceiptHandle']);
-            }
+        if ($this->largePayloadMessageExtension === null) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            return parent::deleteMessageBatchAsync($args);
         }
 
-        return $promise;
+        $originalReceipts = [];
+
+        foreach ($args['Entries'] as $receipt) {
+            if (!$this->largePayloadMessageExtension->isS3ReceiptHandle($receipt['ReceiptHandle'])) {
+                $originalReceipts[] = $receipt;
+                continue;
+            }
+
+            $this->largePayloadMessageExtension->deleteMessageFromS3($receipt['ReceiptHandle']);
+
+            $originalReceiptHandle = $this->largePayloadMessageExtension->getOriginalReceiptHandle(
+                $receipt['ReceiptHandle']
+            );
+
+            $originalReceipt = $receipt;
+            $originalReceipt['ReceiptHandle'] = $originalReceiptHandle;
+            $originalReceipts[] = $originalReceipt;
+        }
+
+        $args['Entries'] = $originalReceipts;
+
+        /** @noinspection PhpUndefinedMethodInspection */
+        return parent::deleteMessageBatchAsync($args);
     }
 
     /**
