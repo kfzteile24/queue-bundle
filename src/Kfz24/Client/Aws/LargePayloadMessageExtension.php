@@ -24,6 +24,9 @@ class LargePayloadMessageExtension
     private $bucketName;
 
     /**
+     * The message size in KB for when a message counts as too large.
+     * This value will be converted to bytes when calculating the message size.
+     *
      * @var int
      */
     private $largeMessageSizeThreshold = self::DEFAULT_LARGE_MESSAGE_SIZE_THRESHOLD;
