@@ -26,7 +26,7 @@ class LargePayloadMessageExtension
     /**
      * @var int
      */
-    private $largeMessageSizeThreshold;
+    private $largeMessageSizeThreshold = self::DEFAULT_LARGE_MESSAGE_SIZE_THRESHOLD;
 
     /**
      * @param S3Client $s3Client
@@ -36,7 +36,6 @@ class LargePayloadMessageExtension
     {
         $this->s3Client = $s3Client;
         $this->bucketName = $bucketName;
-        $this->largeMessageSizeThreshold = self::DEFAULT_LARGE_MESSAGE_SIZE_THRESHOLD;
     }
 
     /**
