@@ -19,30 +19,30 @@ composer require kfzteile24/queue-bundle
 kfz24_queue:
     clients:
         notify:
-            type:              "sns"
-            region:            "eu-central-1"
-            resource:          "arn:aws:sns:eu-central-1:123456789012:topic"
-            access_key:        "AKIAABCDEFGHIJKLMNOP"
-            secret_access_key: "s3CR3t4Cc3S5K3y"
+            type:                        "sns"
+            region:                      "eu-central-1"
+            resource:                    "arn:aws:sns:eu-central-1:123456789012:topic"
+            access_key:                  "AKIAABCDEFGHIJKLMNOP"
+            secret_access_key:           "s3CR3t4Cc3S5K3y"
         one_consumer:
-            type:              "sqs"
-            region:            "eu-central-1"
-            resource:          "https://sqs.eu-central-1.amazonaws.com/123456789012/one-queue"
-            access_key:        "AKIAABCDEFGHIJKLMNOP"
-            secret_access_key: "s3CR3t4Cc3S5K3y"
+            type:                        "sqs"
+            region:                      "eu-central-1"
+            resource:                    "https://sqs.eu-central-1.amazonaws.com/123456789012/one-queue"
+            access_key:                  "AKIAABCDEFGHIJKLMNOP"
+            secret_access_key:           "s3CR3t4Cc3S5K3y"
         another_consumer:
-            type:              "sqs"
-            region:            "eu-central-1"
-            resource:          "https://sqs.eu-central-1.amazonaws.com/123456789012/another-queue"
-            access_key:        "AKIAABCDEFGHIJKLMNOP"
-            secret_access_key: "s3CR3t4Cc3S5K3y"
+            type:                        "sqs"
+            region:                      "eu-central-1"
+            resource:                    "https://sqs.eu-central-1.amazonaws.com/123456789012/another-queue"
+            access_key:                  "AKIAABCDEFGHIJKLMNOP"
+            secret_access_key:           "s3CR3t4Cc3S5K3y"
             large_payload_client:
-                region:                   "eu-central-1"
-                endpoint:                 "http://s3-eu-central-1.amazonaws.com/consumer_bucket"
-                bucket:                   "consumer_bucket"
-                access_key:               "AKIAABCDEFGHIJKLMNOP"
-                secret_access_key:        "s3CR3t4Cc3S5K3y"
-                use_path_style_endpoint:  "true" | "false"
+                region:                  "eu-central-1"
+                endpoint:                "http://s3-eu-central-1.amazonaws.com/consumer_bucket"
+                bucket:                  "consumer_bucket"
+                access_key:              "AKIAABCDEFGHIJKLMNOP"
+                secret_access_key:       "s3CR3t4Cc3S5K3y"
+                use_path_style_endpoint: "true" | "false"
 ```
 
 ## Usage
