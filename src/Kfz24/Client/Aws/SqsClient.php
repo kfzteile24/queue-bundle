@@ -12,6 +12,13 @@ class SqsClient extends AbstractAwsClient
 {
     const RESOURCE_NAME = 'QueueUrl';
 
+    private const MESSAGE_BODY = 'MessageBody';
+    private const MESSAGES = 'Messages';
+    private const MESSAGE = 'Message';
+    private const BODY = 'body';
+    private const RECEIPT_HANDLE = 'ReceiptHandle';
+    private const ENTRIES = 'Entries';
+
     /**
      * @var MessageValidator
      */
@@ -74,20 +81,20 @@ class SqsClient extends AbstractAwsClient
     public function send($message)
     {
         if (is_array($message)) {
-            if (!array_key_exists('MessageBody', $message)) {
-                $message = ['MessageBody' => json_encode($message)];
+            if (!array_key_exists(self::MESSAGE_BODY, $message)) {
+                $message = [self::MESSAGE_BODY => json_encode($message)];
             }
-            else if (is_array($message['MessageBody']) || is_object($message['MessageBody'])) {
-                $message['MessageBody'] = json_encode($message['MessageBody']);
+            else if (is_array($message[self::MESSAGE_BODY]) || is_object($message[self::MESSAGE_BODY])) {
+                $message[self::MESSAGE_BODY] = json_encode($message[self::MESSAGE_BODY]);
             }
         }
 
         if (!is_array($message)) {
             if (is_string($message) && $this->isJsonString($message)) {
-                $message = ['MessageBody' => $message];
+                $message = [self::MESSAGE_BODY => $message];
             }
             else {
-                $message = ['MessageBody' => json_encode($message)];
+                $message = [self::MESSAGE_BODY => json_encode($message)];
             }
         }
 
@@ -96,7 +103,7 @@ class SqsClient extends AbstractAwsClient
             && $this->largePayloadMessageExtension->isMessageLarge($message)
         ) {
             $messageS3Pointer = $this->largePayloadMessageExtension->storeMessageInS3($message);
-            $message['MessageBody'] = json_encode($messageS3Pointer);
+            $message[self::MESSAGE_BODY] = json_encode($messageS3Pointer);
         }
 
         /** @noinspection PhpUndefinedMethodInspection */
@@ -112,37 +119,37 @@ class SqsClient extends AbstractAwsClient
     {
         /** @noinspection PhpUndefinedMethodInspection */
         $result = $this->receiveMessage($args);
-        $messages = $result['Messages'];
+        $messages = $result[self::MESSAGES];
         $handledMessages = [];
 
         if (null !== $messages) {
             foreach ($messages as $message) {
-                $body = json_decode($message['Body'], true);
+                $body = json_decode($message[self::BODY], true);
 
                 if (JSON_ERROR_NONE === json_last_error() && is_array($body)) {
-                    $message['Body'] = $this->handleSnsMessageBody($body);
+                    $message[self::BODY] = $this->handleSnsMessageBody($body);
                 }
 
                 if ($this->largePayloadMessageExtension !== null) {
                     $messageS3Pointer = $this->largePayloadMessageExtension
-                        ->messageS3PointerFromMessageBody(json_decode($message['Body'], true));
+                        ->messageS3PointerFromMessageBody(json_decode($message[self::BODY], true));
 
                     if ($messageS3Pointer !== null) {
-                        $message['Body'] = $this->largePayloadMessageExtension->fetchMessageFromS3($messageS3Pointer);
-                        $message['ReceiptHandle'] = $this->largePayloadMessageExtension->embedS3PointerInReceiptHandle(
-                            $message['ReceiptHandle'],
+                        $message[self::BODY] = $this->largePayloadMessageExtension->fetchMessageFromS3($messageS3Pointer);
+                        $message[self::RECEIPT_HANDLE] = $this->largePayloadMessageExtension->embedS3PointerInReceiptHandle(
+                            $message[self::RECEIPT_HANDLE],
                             $messageS3Pointer
                         );
                     }
                 }
 
-                if ($message['Body'] !== null) {
+                if ($message[self::BODY] !== null) {
                     $handledMessages[] = $message;
                 }
             }
         }
 
-        $result['Messages'] = $handledMessages;
+        $result[self::MESSAGES] = $handledMessages;
 
         return $result;
     }
@@ -161,24 +168,24 @@ class SqsClient extends AbstractAwsClient
 
         $originalReceipts = [];
 
-        foreach ($args['Entries'] as $receipt) {
-            if (!$this->largePayloadMessageExtension->isS3ReceiptHandle($receipt['ReceiptHandle'])) {
+        foreach ($args[self::ENTRIES] as $receipt) {
+            if (!$this->largePayloadMessageExtension->isS3ReceiptHandle($receipt[self::RECEIPT_HANDLE])) {
                 $originalReceipts[] = $receipt;
                 continue;
             }
 
-            $this->largePayloadMessageExtension->deleteMessageFromS3($receipt['ReceiptHandle']);
+            $this->largePayloadMessageExtension->deleteMessageFromS3($receipt[self::RECEIPT_HANDLE]);
 
             $originalReceiptHandle = $this->largePayloadMessageExtension->getOriginalReceiptHandle(
-                $receipt['ReceiptHandle']
+                $receipt[self::RECEIPT_HANDLE]
             );
 
             $originalReceipt = $receipt;
-            $originalReceipt['ReceiptHandle'] = $originalReceiptHandle;
+            $originalReceipt[self::RECEIPT_HANDLE] = $originalReceiptHandle;
             $originalReceipts[] = $originalReceipt;
         }
 
-        $args['Entries'] = $originalReceipts;
+        $args[self::ENTRIES] = $originalReceipts;
 
         /** @noinspection PhpUndefinedMethodInspection */
         return parent::deleteMessageBatchAsync($args);
@@ -200,7 +207,7 @@ class SqsClient extends AbstractAwsClient
             if (null !== $this->validator) {
                 // if message is legit and valid unfold the body to get rid of the envelop
                 if ($this->validator->isValid($message)) {
-                    return $body['Message'];
+                    return $body[self::MESSAGE];
                 }
 
                 if ($this->logger) {
