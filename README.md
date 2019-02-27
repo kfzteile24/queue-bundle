@@ -36,6 +36,13 @@ kfz24_queue:
             resource:          "https://sqs.eu-central-1.amazonaws.com/123456789012/another-queue"
             access_key:        "AKIAABCDEFGHIJKLMNOP"
             secret_access_key: "s3CR3t4Cc3S5K3y"
+            large_payload_client:
+                region:                   "eu-central-1"
+                endpoint:                 "http://s3-eu-central-1.amazonaws.com/consumer_bucket"
+                bucket:                   "consumer_bucket"
+                access_key:               "AKIAABCDEFGHIJKLMNOP"
+                secret_access_key:        "s3CR3t4Cc3S5K3y"
+                use_path_style_endpoint:  "true" | "false"
 ```
 
 ## Usage
