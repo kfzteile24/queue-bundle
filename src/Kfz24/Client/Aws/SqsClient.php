@@ -231,8 +231,6 @@ class SqsClient extends AbstractAwsClient
      */
     private function isJsonString(string $message): bool
     {
-        json_decode($message);
-
-        return (json_last_error() === JSON_ERROR_NONE);
+        return (null !== json_decode($message));
     }
 }
