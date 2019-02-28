@@ -15,7 +15,7 @@ class SqsClient extends AbstractAwsClient
     private const MESSAGE_BODY = 'MessageBody';
     private const MESSAGES = 'Messages';
     private const MESSAGE = 'Message';
-    private const BODY = 'body';
+    private const BODY = 'Body';
     private const RECEIPT_HANDLE = 'ReceiptHandle';
     private const ENTRIES = 'Entries';
 
