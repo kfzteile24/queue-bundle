@@ -5,47 +5,19 @@ namespace Kfz24\QueueBundle\Client\Aws;
 use Aws\Result;
 use Aws\Sns\Message;
 use Aws\Sns\MessageValidator;
+use GuzzleHttp\Promise\Promise;
 use Psr\Log\LoggerInterface;
 
-/**
- * @method \Aws\Result addPermission(array $args = [])
- * @method \GuzzleHttp\Promise\Promise addPermissionAsync(array $args = [])
- * @method \Aws\Result changeMessageVisibility(array $args = [])
- * @method \GuzzleHttp\Promise\Promise changeMessageVisibilityAsync(array $args = [])
- * @method \Aws\Result changeMessageVisibilityBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise changeMessageVisibilityBatchAsync(array $args = [])
- * @method \Aws\Result createQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise createQueueAsync(array $args = [])
- * @method \Aws\Result deleteMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteMessageAsync(array $args = [])
- * @method \Aws\Result deleteMessageBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteMessageBatchAsync(array $args = [])
- * @method \Aws\Result deleteQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise deleteQueueAsync(array $args = [])
- * @method \Aws\Result getQueueAttributes(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getQueueAttributesAsync(array $args = [])
- * @method \Aws\Result getQueueUrl(array $args = [])
- * @method \GuzzleHttp\Promise\Promise getQueueUrlAsync(array $args = [])
- * @method \Aws\Result listDeadLetterSourceQueues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listDeadLetterSourceQueuesAsync(array $args = [])
- * @method \Aws\Result listQueues(array $args = [])
- * @method \GuzzleHttp\Promise\Promise listQueuesAsync(array $args = [])
- * @method \Aws\Result purgeQueue(array $args = [])
- * @method \GuzzleHttp\Promise\Promise purgeQueueAsync(array $args = [])
- * @method \Aws\Result receiveMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise receiveMessageAsync(array $args = [])
- * @method \Aws\Result removePermission(array $args = [])
- * @method \GuzzleHttp\Promise\Promise removePermissionAsync(array $args = [])
- * @method \Aws\Result sendMessage(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendMessageAsync(array $args = [])
- * @method \Aws\Result sendMessageBatch(array $args = [])
- * @method \GuzzleHttp\Promise\Promise sendMessageBatchAsync(array $args = [])
- * @method \Aws\Result setQueueAttributes(array $args = [])
- * @method \GuzzleHttp\Promise\Promise setQueueAttributesAsync(array $args = [])
- */
 class SqsClient extends AbstractAwsClient
 {
     const RESOURCE_NAME = 'QueueUrl';
+
+    private const MESSAGE_BODY = 'MessageBody';
+    private const MESSAGES = 'Messages';
+    private const MESSAGE = 'Message';
+    private const BODY = 'body';
+    private const RECEIPT_HANDLE = 'ReceiptHandle';
+    private const ENTRIES = 'Entries';
 
     /**
      * @var MessageValidator
@@ -58,33 +30,68 @@ class SqsClient extends AbstractAwsClient
     private $logger;
 
     /**
-     * @param MessageValidator $validator
+     * @var LargePayloadMessageExtension
      */
-    public function setValidator(MessageValidator $validator)
+    private $largePayloadMessageExtension;
+
+    /**
+     * @param MessageValidator $validator
+     *
+     * @return SqsClient
+     */
+    public function setValidator(MessageValidator $validator): SqsClient
     {
         $this->validator = $validator;
+
+        return $this;
     }
 
     /**
      * @param LoggerInterface $logger
+     *
+     * @return SqsClient
      */
-    public function setLogger(LoggerInterface $logger)
+    public function setLogger(LoggerInterface $logger): SqsClient
     {
         $this->logger = $logger;
+
+        return $this;
     }
 
     /**
-     * @param string|array $message
+     * @param LargePayloadMessageExtension $largePayloadMessageExtension
+     *
+     * @return SqsClient
+     */
+    public function setLargePayloadMessageExtension(
+        LargePayloadMessageExtension $largePayloadMessageExtension
+    ): SqsClient {
+        $this->largePayloadMessageExtension = $largePayloadMessageExtension;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $message
      *
      * @return Result
      *
+     * @throws \Exception
      */
     public function send($message)
     {
-        if (!is_array($message) || !array_key_exists('MessageBody', $message)) {
-            $message = ['MessageBody' => json_encode($message)];
+        $message = $this->prepareMessageFromArrayMessage($message);
+        $message = $this->prepareMessageFromNonArrayMessage($message);
+
+        if (
+            $this->largePayloadMessageExtension !== null
+            && $this->largePayloadMessageExtension->isMessageLarge($message)
+        ) {
+            $messageS3Pointer = $this->largePayloadMessageExtension->storeMessageInS3($message);
+            $message[self::MESSAGE_BODY] = json_encode($messageS3Pointer);
         }
 
+        /** @noinspection PhpUndefinedMethodInspection */
         return $this->sendMessage($message);
     }
 
@@ -95,27 +102,78 @@ class SqsClient extends AbstractAwsClient
      */
     public function receive(array $args = [])
     {
+        /** @noinspection PhpUndefinedMethodInspection */
         $result = $this->receiveMessage($args);
-        $messages = $result['Messages'];
+        $messages = $result[self::MESSAGES];
         $handledMessages = [];
 
         if (null !== $messages) {
             foreach ($messages as $message) {
-                $body = json_decode($message['Body'], true);
+                $body = json_decode($message[self::BODY], true);
 
                 if (JSON_ERROR_NONE === json_last_error() && is_array($body)) {
-                    $message['Body'] = $this->handleSnsMessageBody($body);
+                    $message[self::BODY] = $this->handleSnsMessageBody($body);
                 }
 
-                if ($message['Body'] !== null) {
+                if ($this->largePayloadMessageExtension !== null) {
+                    $messageS3Pointer = $this->largePayloadMessageExtension
+                        ->messageS3PointerFromMessageBody(json_decode($message[self::BODY], true));
+
+                    if ($messageS3Pointer !== null) {
+                        $message[self::BODY] = $this->largePayloadMessageExtension->fetchMessageFromS3($messageS3Pointer);
+                        $message[self::RECEIPT_HANDLE] = $this->largePayloadMessageExtension->embedS3PointerInReceiptHandle(
+                            $message[self::RECEIPT_HANDLE],
+                            $messageS3Pointer
+                        );
+                    }
+                }
+
+                if ($message[self::BODY] !== null) {
                     $handledMessages[] = $message;
                 }
             }
         }
 
-        $result['Messages'] = $handledMessages;
+        $result[self::MESSAGES] = $handledMessages;
 
         return $result;
+    }
+
+    /**
+     * @param array $args
+     *
+     * @return Promise
+     */
+    public function deleteMessageBatchAsync(array $args = []): Promise
+    {
+        if ($this->largePayloadMessageExtension === null) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            return parent::deleteMessageBatchAsync($args);
+        }
+
+        $originalReceipts = [];
+
+        foreach ($args[self::ENTRIES] as $receipt) {
+            if (!$this->largePayloadMessageExtension->isS3ReceiptHandle($receipt[self::RECEIPT_HANDLE])) {
+                $originalReceipts[] = $receipt;
+                continue;
+            }
+
+            $this->largePayloadMessageExtension->deleteMessageFromS3($receipt[self::RECEIPT_HANDLE]);
+
+            $originalReceiptHandle = $this->largePayloadMessageExtension->getOriginalReceiptHandle(
+                $receipt[self::RECEIPT_HANDLE]
+            );
+
+            $originalReceipt = $receipt;
+            $originalReceipt[self::RECEIPT_HANDLE] = $originalReceiptHandle;
+            $originalReceipts[] = $originalReceipt;
+        }
+
+        $args[self::ENTRIES] = $originalReceipts;
+
+        /** @noinspection PhpUndefinedMethodInspection */
+        return parent::deleteMessageBatchAsync($args);
     }
 
     /**
@@ -134,7 +192,7 @@ class SqsClient extends AbstractAwsClient
             if (null !== $this->validator) {
                 // if message is legit and valid unfold the body to get rid of the envelop
                 if ($this->validator->isValid($message)) {
-                    return $body['Message'];
+                    return $body[self::MESSAGE];
                 }
 
                 if ($this->logger) {
@@ -149,5 +207,51 @@ class SqsClient extends AbstractAwsClient
         }
 
         return json_encode($body);
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return bool
+     */
+    private function isJsonString(string $message): bool
+    {
+        return (null !== json_decode($message));
+    }
+
+    /**
+     * @param mixed $message
+     *
+     * @return array
+     */
+    private function prepareMessageFromArrayMessage($message): array
+    {
+        if (is_array($message)) {
+            if (!array_key_exists(self::MESSAGE_BODY, $message)) {
+                $message = [self::MESSAGE_BODY => json_encode($message)];
+            } else if (is_array($message[self::MESSAGE_BODY]) || is_object($message[self::MESSAGE_BODY])) {
+                $message[self::MESSAGE_BODY] = json_encode($message[self::MESSAGE_BODY]);
+            }
+        }
+
+        return $message;
+    }
+
+    /**
+     * @param mixed $message
+     *
+     * @return array
+     */
+    private function prepareMessageFromNonArrayMessage($message): array
+    {
+        if (!is_array($message)) {
+            if (is_string($message) && $this->isJsonString($message)) {
+                $message = [self::MESSAGE_BODY => $message];
+            } else {
+                $message = [self::MESSAGE_BODY => json_encode($message)];
+            }
+        }
+
+        return $message;
     }
 }
