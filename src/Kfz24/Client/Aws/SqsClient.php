@@ -80,8 +80,12 @@ class SqsClient extends AbstractAwsClient
      */
     public function send($message)
     {
-        $message = $this->prepareMessageFromArrayMessage($message);
-        $message = $this->prepareMessageFromNonArrayMessage($message);
+        if (is_array($message)) {
+            $message = $this->prepareMessageFromArrayMessage($message);
+        } else {
+            $message = $this->prepareMessageFromNonArrayMessage($message);
+        }
+
 
         if (
             $this->largePayloadMessageExtension !== null
@@ -220,18 +224,16 @@ class SqsClient extends AbstractAwsClient
     }
 
     /**
-     * @param mixed $message
+     * @param array $message
      *
      * @return array
      */
-    private function prepareMessageFromArrayMessage($message): array
+    private function prepareMessageFromArrayMessage(array $message): array
     {
-        if (is_array($message)) {
-            if (!array_key_exists(self::MESSAGE_BODY, $message)) {
-                $message = [self::MESSAGE_BODY => json_encode($message)];
-            } else if (is_array($message[self::MESSAGE_BODY]) || is_object($message[self::MESSAGE_BODY])) {
-                $message[self::MESSAGE_BODY] = json_encode($message[self::MESSAGE_BODY]);
-            }
+        if (!array_key_exists(self::MESSAGE_BODY, $message)) {
+            $message = [self::MESSAGE_BODY => json_encode($message)];
+        } else if (is_array($message[self::MESSAGE_BODY]) || is_object($message[self::MESSAGE_BODY])) {
+            $message[self::MESSAGE_BODY] = json_encode($message[self::MESSAGE_BODY]);
         }
 
         return $message;
@@ -244,12 +246,10 @@ class SqsClient extends AbstractAwsClient
      */
     private function prepareMessageFromNonArrayMessage($message): array
     {
-        if (!is_array($message)) {
-            if (is_string($message) && $this->isJsonString($message)) {
-                $message = [self::MESSAGE_BODY => $message];
-            } else {
-                $message = [self::MESSAGE_BODY => json_encode($message)];
-            }
+        if (is_string($message) && $this->isJsonString($message)) {
+            $message = [self::MESSAGE_BODY => $message];
+        } else {
+            $message = [self::MESSAGE_BODY => json_encode($message)];
         }
 
         return $message;
