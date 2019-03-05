@@ -12,6 +12,7 @@ class LargePayloadMessageExtension
     private const DEFAULT_LARGE_MESSAGE_SIZE_THRESHOLD = 250;
     private const S3_BUCKET_NAME_MARKER = '-..s3BucketName..-';
     private const S3_KEY_MARKER = '-..s3Key..-';
+    private const JAVA_S3_POINTER_STRING = 'com.amazon.sqs.javamessaging.MessageS3Pointer';
 
     /**
      * @var S3Client
@@ -154,7 +155,7 @@ class LargePayloadMessageExtension
     public function messageS3PointerFromMessageBody(array $messageBody): ?MessageS3Pointer
     {
         if (!$this->messageBodyContainsMessageS3Pointer($messageBody)) {
-            return null;
+            return $this->fetchJavaMessageS3Pointer($messageBody);
         }
 
         $messageS3Pointer = new MessageS3Pointer();
@@ -163,6 +164,25 @@ class LargePayloadMessageExtension
 
         return $messageS3Pointer;
     }
+
+    /**
+     * @param array $messageBody
+     *
+     * @return MessageS3Pointer|null
+     */
+    public function fetchJavaMessageS3Pointer(array $messageBody): ?MessageS3Pointer
+    {
+        $messageS3Pointer = null;
+
+        if (isset($messageBody[0]) && $messageBody[0] === self::JAVA_S3_POINTER_STRING) {
+            $messageS3Pointer = new MessageS3Pointer();
+            $messageS3Pointer->setS3BucketName($messageBody[1]['s3BucketName']);
+            $messageS3Pointer->setS3Key($messageBody[1]['s3Key']);
+        }
+
+        return $messageS3Pointer;
+    }
+
 
     /**
      * @param string $receiptHandle
