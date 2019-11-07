@@ -1,7 +1,7 @@
 {
     "name": "kfzteile24/queue-bundle",
     "description": "Provides an abstraction on top of AWS' PHP SDK Sqs- and SnsClient to make it DI friendly.",
-    "license": "MIT",
+    "license": "PROPRIETARY",
     "type": "symfony-bundle",
     "homepage": "https://github.com/kfzteile24/queue-bundle",
     "keywords": [
@@ -14,11 +14,15 @@
         {
             "email": "jacopo.melloni@project-a.com",
             "name": "Jacopo Melloni"
+        },
+        {
+            "email": "sorin.badea@arnia.ro",
+            "name": "Sorin Badea"
         }
     ],
     "autoload": {
         "psr-4": {
-            "Kfz24\\QueueBundle\\": "src/Kfz24"
+            "Kfz24\\QueueBundle\\": "src/"
         }
     },
     "autoload-dev": {
@@ -28,16 +32,18 @@
     },
     "require": {
         "php": "^7.1",
-        "aws/aws-sdk-php": "^3.19",
-        "aws/aws-php-sns-message-validator": "~1.1.0",
-        "ext-json": "^1.5",
-        "ramsey/uuid": "^3.8"
+        "ext-json": "*",
+        "aws/aws-sdk-php": "^3.115",
+        "aws/aws-php-sns-message-validator": "^1.6",
+        "ramsey/uuid": "^3.8",
+        "symfony/messenger": "4.2.*"
     },
     "require-dev": {
         "phpunit/phpunit": "~5.7.5",
-        "symfony/config": "~3.2.0",
-        "symfony/dependency-injection": "~3.2.0",
-        "symfony/http-kernel": "~3.2.0"
+        "symfony/config": "^3.4",
+        "symfony/http-kernel": "^3.4",
+        "symfony/serializer": "^3.4",
+        "jms/serializer-bundle": "^3.4"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

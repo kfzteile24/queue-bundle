@@ -20,21 +20,21 @@ class Kfz24QueueExtension extends Extension
 {
     /**
      * {@inheritdoc}
+     * @throws \Exception
      */
     public function load(array $configs, ContainerBuilder $container)
     {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
-        $loader->load('services.xml');
+        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader->load('services.yaml');
 
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
-
+            $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
-            $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
             $adapterDefinition = new Definition($adapterClass, [
                 [
@@ -55,15 +55,21 @@ class Kfz24QueueExtension extends Extension
             $queueClientDefinition = new Definition($clientClass);
             $queueClientDefinition
                 ->addTag('kfz24.queue.client')
-                ->addArgument(new Reference($adapterDefinitionName))
-                ->addArgument($client['resource']);
+                ->setArguments(
+                    [
+                        new Reference($adapterDefinitionName),
+                        new Reference('serializer'),
+                        $client['resource']
+                    ]
+                );
 
             if ($clientType === 'sqs') {
                 $queueClientDefinition->addMethodCall('setValidator', [new Reference('kfz24.queue.message_validator')]);
 
                 if ($client['large_payload_client']['enabled']) {
                     $s3DefinitionName = sprintf('kfz24.queue.s3client.%s', $name);
-                    $largePayloadMessageExtensionDefinitionName = sprintf('kfz24.queue.large_payload_message_extension.%s', $name);
+                    $largePayloadMessageExtensionDefinitionName = sprintf('kfz24.queue.large_payload_message_extension.%s',
+                        $name);
 
                     $this->buildS3ClientDefinition(
                         $s3DefinitionName,
