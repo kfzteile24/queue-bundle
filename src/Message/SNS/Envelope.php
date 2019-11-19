@@ -19,7 +19,6 @@ class Envelope
     protected $createdAt;
 
     /**
-     * AbstractEnvelop constructor.
      * @param MessageInterface $message
      */
     public function __construct(MessageInterface $message)
