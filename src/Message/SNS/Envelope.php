@@ -4,10 +4,6 @@ namespace Kfz24\QueueBundle\Message\SNS;
 
 use JMS\Serializer\Annotation as Serializer;
 
-/**
- * Class Envelope
- * @package Kfz24\QueueBundle\Message\SNS
- */
 class Envelope
 {
     /**

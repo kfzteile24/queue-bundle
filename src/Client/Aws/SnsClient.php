@@ -7,7 +7,6 @@ use Aws\Result;
 use GuzzleHttp\Exception\ClientException;
 use Kfz24\QueueBundle\Message\SNS\Envelope;
 use Kfz24\QueueBundle\Message\SNS\MessageInterface;
-use Kfz24\QueueBundle\Message\SNS\PriorityEnvelope;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 
 /**
@@ -76,10 +75,9 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
  */
 class SnsClient extends AbstractAwsClient
 {
-    const RESOURCE_NAME = self::SnsTopic;
+    protected const RESOURCE_NAME = 'TopicArn';
 
     private const SnsMessage = 'Message';
-    private const SnsTopic = 'TopicArn';
 
     /**
      * @param mixed $message
@@ -93,28 +91,24 @@ class SnsClient extends AbstractAwsClient
 
     /**
      * @param MessageInterface $message
-     * @param int|null $sequence
+     * @return Result
      * @throws \Exception
      */
-    public function sendMessage(MessageInterface $message, ?int $sequence = null): void
+    public function sendMessage(MessageInterface $message): Result
     {
-        if ($sequence) {
-            $this->sendEnvelop(new PriorityEnvelope($message, $sequence));
-            
-            return;
-        }
-        $this->sendEnvelop(new Envelope($message));
+        return $this->sendEnvelope(new Envelope($message));
     }
 
     /**
      * @param Envelope $messageEnvelop
+     * @return Result
      * @throws \Exception
      */
-    public function sendEnvelop(Envelope $messageEnvelop): void
+    public function sendEnvelope(Envelope $messageEnvelop): Result
     {
         $messageEnvelop->setCreatedAt(new \DateTimeImmutable());
 
-        $this->publish([
+        return $this->publish([
             self::SnsMessage => $this->serializer->serialize($messageEnvelop, JsonEncoder::FORMAT)
         ]);
     }

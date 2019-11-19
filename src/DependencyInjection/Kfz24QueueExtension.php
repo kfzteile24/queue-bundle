@@ -32,9 +32,9 @@ class Kfz24QueueExtension extends Extension
 
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
-            $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
+            $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
             $adapterDefinition = new Definition($adapterClass, [
                 [
@@ -68,8 +68,10 @@ class Kfz24QueueExtension extends Extension
 
                 if ($client['large_payload_client']['enabled']) {
                     $s3DefinitionName = sprintf('kfz24.queue.s3client.%s', $name);
-                    $largePayloadMessageExtensionDefinitionName = sprintf('kfz24.queue.large_payload_message_extension.%s',
-                        $name);
+                    $largePayloadMessageExtensionDefinitionName = sprintf(
+                        'kfz24.queue.large_payload_message_extension.%s',
+                        $name
+                    );
 
                     $this->buildS3ClientDefinition(
                         $s3DefinitionName,

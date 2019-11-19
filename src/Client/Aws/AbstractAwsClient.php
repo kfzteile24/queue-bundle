@@ -8,7 +8,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 abstract class AbstractAwsClient implements ClientInterface
 {
-    const RESOURCE_NAME = '';
+    protected const RESOURCE_NAME = '';
 
     /**
      * @var AwsClientInterface

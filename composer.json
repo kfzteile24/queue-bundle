@@ -1,7 +1,7 @@
 {
     "name": "kfzteile24/queue-bundle",
     "description": "Provides an abstraction on top of AWS' PHP SDK Sqs- and SnsClient to make it DI friendly.",
-    "license": "PROPRIETARY",
+    "license": "MIT",
     "type": "symfony-bundle",
     "autoload": {
         "psr-4": {
