@@ -88,9 +88,7 @@ class SnsClient extends AbstractAwsClient
      */
     public function send($message): Result
     {
-        $args = [self::SnsMessage => json_encode($message),];
-
-        return $this->publish($args);
+        return $this->publish([self::SnsMessage => json_encode($message),]);
     }
 
     /**
@@ -102,6 +100,7 @@ class SnsClient extends AbstractAwsClient
     {
         if ($sequence) {
             $this->sendEnvelop(new PriorityEnvelope($message, $sequence));
+            
             return;
         }
         $this->sendEnvelop(new Envelope($message));
