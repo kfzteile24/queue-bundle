@@ -3,23 +3,6 @@
     "description": "Provides an abstraction on top of AWS' PHP SDK Sqs- and SnsClient to make it DI friendly.",
     "license": "PROPRIETARY",
     "type": "symfony-bundle",
-    "homepage": "https://github.com/kfzteile24/queue-bundle",
-    "keywords": [
-        "aws",
-        "sqs",
-        "sns",
-        "queue"
-    ],
-    "authors": [
-        {
-            "email": "jacopo.melloni@project-a.com",
-            "name": "Jacopo Melloni"
-        },
-        {
-            "email": "sorin.badea@arnia.ro",
-            "name": "Sorin Badea"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Kfz24\\QueueBundle\\": "src/"
