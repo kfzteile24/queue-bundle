@@ -4,9 +4,10 @@
     "license": "MIT",
     "type": "symfony-bundle",
     "autoload": {
-        "psr-4": {
-            "Kfz24\\QueueBundle\\": "src/"
-        }
+        "psr-4": { "Kfz24\\QueueBundle\\": "" },
+        "exclude-from-classmap": [
+            "/tests/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
