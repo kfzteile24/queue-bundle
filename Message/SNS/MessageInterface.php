@@ -2,6 +2,13 @@
 
 namespace Kfz24\QueueBundle\Message\SNS;
 
+use JMS\Serializer\Annotation as Serializer;
+
+/**
+ * Interface MessageInterface
+ * @package Kfz24\QueueBundle\Message\SNS
+ * @Serializer\ExclusionPolicy("all")
+ */
 interface MessageInterface
 {
     /**

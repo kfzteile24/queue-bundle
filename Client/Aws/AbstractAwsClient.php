@@ -3,8 +3,8 @@
 namespace Kfz24\QueueBundle\Client\Aws;
 
 use Aws\AwsClientInterface;
+use JMS\Serializer\SerializerInterface;
 use Kfz24\QueueBundle\Client\ClientInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 abstract class AbstractAwsClient implements ClientInterface
 {

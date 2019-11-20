@@ -4,7 +4,7 @@ parameters:
   kfz24.queue.sqs.api_version: "2012-11-05"
   kfz24.queue.sns.client.class: Kfz24\QueueBundle\Client\Aws\SnsClient
   kfz24.queue.sns.adapter.class: Aws\Sns\SnsClient
-  kfz24.queue.sns.api_version: "2016-08-06"
+  kfz24.queue.sns.api_version: "2010-03-31"
   kfz24.queue.mock.client.class: Kfz24\QueueBundle\Client\Mock\MockClient
   kfz24.queue.mock.adapter.class: Kfz24\QueueBundle\Client\Mock\MockNoopAdapter
   kfz24.queue.mock.api_version: "1"

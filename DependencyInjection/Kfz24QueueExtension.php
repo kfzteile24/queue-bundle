@@ -58,7 +58,7 @@ class Kfz24QueueExtension extends Extension
                 ->setArguments(
                     [
                         new Reference($adapterDefinitionName),
-                        new Reference('serializer'),
+                        new Reference('jms_serializer.serializer'),
                         $client['resource']
                     ]
                 );
