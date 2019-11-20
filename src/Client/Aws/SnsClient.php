@@ -77,7 +77,7 @@ class SnsClient extends AbstractAwsClient
 {
     protected const RESOURCE_NAME = 'TopicArn';
 
-    private const SnsMessage = 'Message';
+    private const KEY_SNS_MESSAGE = 'Message';
 
     /**
      * @param mixed $message
@@ -86,7 +86,7 @@ class SnsClient extends AbstractAwsClient
      */
     public function send($message): Result
     {
-        return $this->publish([self::SnsMessage => json_encode($message),]);
+        return $this->publish([self::KEY_SNS_MESSAGE => json_encode($message),]);
     }
 
     /**
@@ -109,7 +109,7 @@ class SnsClient extends AbstractAwsClient
         $messageEnvelop->setCreatedAt(new \DateTimeImmutable());
 
         return $this->publish([
-            self::SnsMessage => $this->serializer->serialize($messageEnvelop, JsonEncoder::FORMAT)
+            self::KEY_SNS_MESSAGE => $this->serializer->serialize($messageEnvelop, JsonEncoder::FORMAT)
         ]);
     }
 
