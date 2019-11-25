@@ -1,8 +1,13 @@
 <?php
+declare(strict_types = 1);
 
 namespace Kfz24\QueueBundle\Client\Aws;
 
 use Aws\Result;
+use GuzzleHttp\Exception\ClientException;
+use Kfz24\QueueBundle\Message\SNS\Envelope;
+use Kfz24\QueueBundle\Message\SNS\MessageInterface;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
 
 /**
  * This client is used to interact with the **Amazon Simple Notification Service (Amazon SNS)**.
@@ -70,18 +75,42 @@ use Aws\Result;
  */
 class SnsClient extends AbstractAwsClient
 {
-    const RESOURCE_NAME = 'TopicArn';
+    protected const RESOURCE_NAME = 'TopicArn';
+
+    private const KEY_SNS_MESSAGE = 'Message';
 
     /**
      * @param mixed $message
      *
      * @return Result
      */
-    public function send($message)
+    public function send($message): Result
     {
-        $args = ['Message' => json_encode($message)];
+        return $this->publish([self::KEY_SNS_MESSAGE => json_encode($message),]);
+    }
 
-        return $this->publish($args);
+    /**
+     * @param MessageInterface $message
+     * @return Result
+     * @throws \Exception
+     */
+    public function sendMessage(MessageInterface $message): Result
+    {
+        return $this->sendEnvelope(new Envelope($message));
+    }
+
+    /**
+     * @param Envelope $messageEnvelop
+     * @return Result
+     * @throws \Exception
+     */
+    public function sendEnvelope(Envelope $messageEnvelop): Result
+    {
+        $messageEnvelop->setCreatedAt(new \DateTimeImmutable());
+
+        return $this->publish([
+            self::KEY_SNS_MESSAGE => $this->serializer->serialize($messageEnvelop, JsonEncoder::FORMAT)
+        ]);
     }
 
     /**

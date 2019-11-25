@@ -3,16 +3,22 @@
 namespace Kfz24\QueueBundle\Client\Aws;
 
 use Aws\AwsClientInterface;
+use JMS\Serializer\SerializerInterface;
 use Kfz24\QueueBundle\Client\ClientInterface;
 
 abstract class AbstractAwsClient implements ClientInterface
 {
-    const RESOURCE_NAME = '';
+    protected const RESOURCE_NAME = '';
 
     /**
      * @var AwsClientInterface
      */
     protected $client;
+
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
 
     /**
      * @var string
@@ -21,17 +27,19 @@ abstract class AbstractAwsClient implements ClientInterface
 
     /**
      * @param AwsClientInterface $client
-     * @param string             $resource
+     * @param SerializerInterface $serializer
+     * @param string $resource
      */
-    public function __construct(AwsClientInterface $client, string $resource)
+    public function __construct(AwsClientInterface $client, SerializerInterface $serializer, string $resource)
     {
         $this->client = $client;
+        $this->serializer = $serializer;
         $this->resource = $resource;
     }
 
     /**
      * @param string $name
-     * @param array  $args
+     * @param array $args
      *
      * @return mixed
      */

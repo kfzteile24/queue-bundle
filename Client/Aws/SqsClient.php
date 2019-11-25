@@ -10,7 +10,7 @@ use Psr\Log\LoggerInterface;
 
 class SqsClient extends AbstractAwsClient
 {
-    const RESOURCE_NAME = 'QueueUrl';
+    protected const RESOURCE_NAME = 'QueueUrl';
 
     private const MESSAGE_BODY = 'MessageBody';
     private const MESSAGES = 'Messages';
