@@ -65,7 +65,7 @@ class Envelope
      * @param \DateTimeImmutable $dateTime
      * @return $this
      */
-    public function setCreatedAt(\DateTimeImmutable $dateTime)
+    public function setCreatedAt(\DateTimeImmutable $dateTime) : self
     {
         $this->createdAt = $dateTime;
 
