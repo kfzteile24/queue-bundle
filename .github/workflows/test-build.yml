@@ -12,5 +12,5 @@ jobs:
           echo ${{ secrets.GH_TOKEN }}
           mkdir -pv /home/${USER}/.composer
           echo "{\"github-oauth\": {\"github.com\": \"${{ secrets.GH_TOKEN }}\"}}" > /home/${USER}/.composer/auth.json
-          composer install --dev --no-scripts --ignore-platform-reqs  # ignore-reqs because we run on bare ubuntu and we do not care about vendor dependencies here
+          composer install --no-scripts --ignore-platform-reqs  # ignore-reqs because we run on bare ubuntu and we do not care about vendor dependencies here
           vendor/bin/phpunit
