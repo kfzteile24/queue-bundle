@@ -23,7 +23,7 @@ abstract class AbstractAwsClient implements ClientInterface
     /**
      * @var string
      */
-    private $resource;
+    protected $resource;
 
     /**
      * @param AwsClientInterface $client

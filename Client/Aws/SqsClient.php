@@ -138,6 +138,22 @@ class SqsClient extends AbstractAwsClient
         return $this->sendMessageBatch(['Entries' => $messages]);
     }
 
+    public function getQueueAttributes(array $options = [])
+    {
+        $options[static::RESOURCE_NAME] = $this->resource;
+
+        /** @var Result $result */
+        $result = parent::getQueueAttributes($options);
+
+        return $result->get('Attributes');
+    }
+
+
+    public function getApproximateNumberOfMessages(): int
+    {
+        return $this->getQueueAttributes(['AttributeNames' => ['ApproximateNumberOfMessages']])['ApproximateNumberOfMessages'];
+    }
+
     /**
      * @param array $messages
      */
