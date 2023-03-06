@@ -257,6 +257,53 @@ class SqsClient extends AbstractAwsClient
     }
 
     /**
+     * @param array $args
+     *
+     * @return Result
+     */
+    public function deleteMessageBatch(array $args = []): Result
+    {
+        if ($this->largePayloadMessageExtension === null) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            return parent::deleteMessageBatch($args);
+        }
+
+        $originalReceipts = [];
+
+        foreach ($args[self::ENTRIES] as $receipt) {
+            if (!$this->largePayloadMessageExtension->isS3ReceiptHandle($receipt[self::RECEIPT_HANDLE])) {
+                $originalReceipts[] = $receipt;
+                continue;
+            }
+
+            $this->largePayloadMessageExtension->deleteMessageFromS3($receipt[self::RECEIPT_HANDLE]);
+
+            $originalReceiptHandle = $this->largePayloadMessageExtension->getOriginalReceiptHandle(
+                $receipt[self::RECEIPT_HANDLE]
+            );
+
+            $originalReceipt = $receipt;
+            $originalReceipt[self::RECEIPT_HANDLE] = $originalReceiptHandle;
+            $originalReceipts[] = $originalReceipt;
+        }
+
+        $args[self::ENTRIES] = $originalReceipts;
+
+        /** @noinspection PhpUndefinedMethodInspection */
+        return parent::deleteMessageBatch($args);
+    }
+
+    /**
+     * @param array $args
+     *
+     * @return Result
+     */
+    public function purgeQueue(array $args = []): Result
+    {
+        return parent::purgeQueue($args);
+    }
+
+    /**
      * @param array $body
      *
      * @return string|null
