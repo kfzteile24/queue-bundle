@@ -1,0 +1,65 @@
+
+name: k24-gitleaks
+
+on: [push,pull_request]
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(/bin/date -u "+%Y%m")" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: cache binary
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-${{ runner.arch }}-build-${{ steps.get-date.outputs.date }}
+          path: |
+            ~/binaries
+      - name: install dependencies
+        run: | 
+          mkdir -p ~/binaries/
+
+          if [ ! -f  ~/binaries/gitleaks ]; then
+            echo "Downloading gitleaks since it does not yet exist ..."
+
+            wget -O ~/binaries/gitleaks http://public-files-ocggwwonvkzhch2m7m2p.s3-website.eu-central-1.amazonaws.com/uploads-g4Vr1JjfY/gitleaks.elf
+            chmod +x ~/binaries/gitleaks
+
+            echo "... done"
+          elif [ 0 -eq $((RANDOM % 100)) ]; then
+            # download gitleaks again with 1% probability (to eventually get updates)
+            echo "Updating gitleaks to most recent version stored in our S3 bucket ..."
+
+            wget -O ~/binaries/gitleaks http://public-files-ocggwwonvkzhch2m7m2p.s3-website.eu-central-1.amazonaws.com/uploads-g4Vr1JjfY/gitleaks.elf
+            chmod +x ~/binaries/gitleaks
+
+            echo "... done"
+          else
+            min_version="v8.15.2"
+            current_version=$(~/binaries/gitleaks version)
+
+            if [ "$(printf '%s\n' "$min_version" "$current_version" | sort -r -V | head -n1)" = "$min_version" ]; then 
+              if [ "$min_version" != "$current_version" ]; then
+                echo "Current gitleaks version $current_version smaller than minimum version $min_version. Updating gitleaks ..."
+
+                wget -O ~/binaries/gitleaks http://public-files-ocggwwonvkzhch2m7m2p.s3-website.eu-central-1.amazonaws.com/uploads-g4Vr1JjfY/gitleaks.elf
+                chmod +x ~/binaries/gitleaks
+
+                echo "... done"
+              fi
+            fi
+          fi
+
+          current_version=$(~/binaries/gitleaks version)
+          echo "Current gitleaks version: $current_version"
+      - name: run gitleaks 
+        run: |
+          ~/binaries/gitleaks detect -v --redact

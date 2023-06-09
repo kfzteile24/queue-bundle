@@ -1,0 +1,32 @@
+
+title = "k24 gitleaks base configuration"
+
+[extend]
+# include all rules from the default configuration, which is baked into the gitleaks binary
+# https://github.com/zricethezav/gitleaks/blob/master/config/gitleaks.toml
+useDefault = true
+
+# gitleaks generic secret detection misses a lot due to aggressive filtering
+# we therefore add a custom rule that matches at least very high entropy generic secrets (such as hardcoded JWTs)
+[[rules]]
+description = "k24 generic secret (very high entropy)"
+id = "k24-generic-very-high-entropy"
+regex = '''(?i)(?:key|api|token|secret|client|passwd|password|auth|access)(?:[0-9a-z\-_\t .]{0,20})(?:[\s|']|[\s|"]){0,3}(?:=|>|:=|\|\|:|<=|=>|:)(?:'|\"|\s|=|\x60){0,5}([0-9a-z\-_.=]{10,150})(?:['|\"|\n|\r|\s|\x60|;]|$)'''
+secretGroup = 1
+entropy = 4.5
+keywords = [
+    "key","api","token","secret","client","passwd","password","auth","access",
+]
+
+[allowlist]
+description = "global allow lists"
+commits = [
+    "ce45b39c6df07e98ee54b3bcff0040fcf5e5f120",
+    "7321b2b59e92fd6b3767d5f7ec8581b051b79c47",
+]
+regexes = [
+    '''(9[0-9]{2}|666)-\d{2}-\d{4}''',
+    '''(.*?)gitleaks:allow'''
+    ]
+paths = [
+]
