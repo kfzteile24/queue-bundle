@@ -295,6 +295,35 @@ class SqsClient extends AbstractAwsClient
 
     /**
      * @param array $args
+     * @param int $timeout
+     * @return void
+     */
+    public function changeMessageVisibility(array $args, int $timeout): void
+    {
+        foreach ($args[self::ENTRIES] as $receipt) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            parent::changeMessageVisibility([
+                'ReceiptHandle' => $receipt[self::RECEIPT_HANDLE],
+                'VisibilityTimeout' => $timeout,
+            ]);
+        }
+    }
+
+    /**
+     * @param array $args
+     * @param int $timeout
+     * @return void
+     */
+    public function changeMessageVisibilityBatch(array $args): void
+    {
+        /** @noinspection PhpUndefinedMethodInspection */
+        parent::changeMessageVisibilityBatch([
+            self::ENTRIES => $args
+        ]);
+    }
+
+    /**
+     * @param array $args
      *
      * @return Result
      */
