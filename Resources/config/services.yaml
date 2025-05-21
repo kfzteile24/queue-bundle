@@ -2,6 +2,7 @@ parameters:
   kfz24.queue.sqs.client.class: Kfz24\QueueBundle\Client\Aws\SqsClient
   kfz24.queue.sqs.adapter.class: Aws\Sqs\SqsClient
   kfz24.queue.sqs.api_version: "2012-11-05"
+  kfz24.queue.sqs.iam_access.api_version: "latest"
   kfz24.queue.sns.client.class: Kfz24\QueueBundle\Client\Aws\SnsClient
   kfz24.queue.sns.adapter.class: Aws\Sns\SnsClient
   kfz24.queue.sns.api_version: "2010-03-31"

@@ -33,20 +33,40 @@ class Kfz24QueueExtension extends Extension
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
+            $iAMApiVersion = $container->getParameter(sprintf('kfz24.queue.%s.iam_access.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            $adapterDefinition = new Definition($adapterClass, [
-                [
-                    'region' => $client['region'],
-                    'endpoint' => $client['endpoint'],
-                    'credentials' => [
-                        'key' => $client['access_key'],
-                        'secret' => $client['secret_access_key']
-                    ],
-                    'version' => $apiVersion
-                ]
-            ]);
+            if (empty($client['iam_access'])) {
+                $adapterDefinition = new Definition($adapterClass, [
+                    [
+                        'region' => $client['region'],
+                        'endpoint' => $client['endpoint'],
+                        'credentials' => [
+                            'key' => $client['access_key'],
+                            'secret' => $client['secret_access_key']
+                        ],
+                        'version' => $apiVersion
+                    ]
+                ]);
+            } else {
+                if (empty($client['iam_access']['web_identity_token_file']) || file_get_contents($client['iam_access']['web_identity_token_file'])) {
+                    throw new \Exception('A valid web_identity_token_file should be specified for IAM Access!');
+                }
+                $adapterDefinition = new Definition($adapterClass, [
+                    [
+                        'region' => $client['region'],
+                        'endpoint' => $client['endpoint'],
+                        'sts_credentials' => [
+                            'web_identity_token' => file_get_contents($client['iam_access']['web_identity_token_file']),
+                            'role_arn' => $client['iam_access']['role_arn'],
+                            'session_name' => $client['iam_access']['session_name'],
+                        ],
+                        'version' => $iAMApiVersion
+                    ]
+                ]);
+            }
+
             $adapterDefinition->setPublic(false);
 
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
