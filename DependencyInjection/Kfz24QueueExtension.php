@@ -53,7 +53,7 @@ class Kfz24QueueExtension extends Extension
                 ]);
             } else {
                 if (empty($client['role_based']['web_identity_token_file'])) {
-                    throw new \Exception('A valid web_identity_token_file should be specified for IAM Access!');
+                    throw new \Exception('A valid web_identity_token_file should be specified for Role Access!');
                 }
                 $stsClient = new StsClient([
                     'region'      => $client['region'],
