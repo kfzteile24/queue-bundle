@@ -46,7 +46,7 @@ class Configuration implements ConfigurationInterface
                             ->scalarNode('secret_access_key')
                                 ->isRequired()
                             ->end()
-                            ->arrayNode('iam_access')
+                            ->arrayNode('role_based')
                                 ->canBeEnabled()
                                 ->children()
                                     ->scalarNode('web_identity_token_file')
