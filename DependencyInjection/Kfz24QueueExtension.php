@@ -35,7 +35,6 @@ class Kfz24QueueExtension extends Extension
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
-            $iAMApiVersion = $container->getParameter(sprintf('kfz24.queue.%s.iam_access.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
@@ -57,7 +56,7 @@ class Kfz24QueueExtension extends Extension
                 }
                 $stsClient = new StsClient([
                     'region'      => $client['region'],
-                    'version'     => $iAMApiVersion,
+                    'version'     => $apiVersion,
                     'credentials' => [
                         'webIdentityTokenFile' => $client['role_based']['web_identity_token_file'],
                         'roleArn' => $client['role_based']['role_arn'],
