@@ -36,7 +36,7 @@ kfz24_queue:
             resource:                    "https://sqs.eu-central-1.amazonaws.com/123456789012/another-queue"
             access_key:                  "AKIAABCDEFGHIJKLMNOP"
             secret_access_key:           "s3CR3t4Cc3S5K3y"
-            iam_access:
+            role_based:
               web_identity_token_file:    "%AWS_WEB_IDENTITY_TOKEN_FILE%"
               role_arn:                   "arn-role-XYZ"
               session_name:               "ABC-session-name"

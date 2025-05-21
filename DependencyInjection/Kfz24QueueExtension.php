@@ -10,6 +10,8 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader;
+use Aws\Sts\StsClient;
+use Aws\Credentials\CredentialProvider;
 
 /**
  * This is the class that loads and manages your bundle configuration.
@@ -37,7 +39,7 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (empty($client['iam_access'])) {
+            if (empty($client['role_based'])) {
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
@@ -50,25 +52,33 @@ class Kfz24QueueExtension extends Extension
                     ]
                 ]);
             } else {
-                if (empty($client['iam_access']['web_identity_token_file']) || !file_get_contents($client['iam_access']['web_identity_token_file'])) {
+                if (empty($client['role_based']['web_identity_token_file'])) {
                     throw new \Exception('A valid web_identity_token_file should be specified for IAM Access!');
                 }
+                $stsClient = new StsClient([
+                    'region'      => $client['region'],
+                    'version'     => $iAMApiVersion,
+                    'credentials' => [
+                        'webIdentityTokenFile' => $client['role_based']['web_identity_token_file'],
+                        'roleArn' => $client['role_based']['role_arn'],
+                        'roleSessionName' => $client['role_based']['session_name'],
+                    ]
+                ]);
+
+                $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
+                // Cache the results in a memoize function to avoid loading and parsing
+                // the ini file on every API operation
+                $provider = CredentialProvider::memoize($provider);
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
-                        'endpoint' => $client['endpoint'],
-                        'sts_credentials' => [
-                            'web_identity_token' => file_get_contents($client['iam_access']['web_identity_token_file']),
-                            'role_arn' => $client['iam_access']['role_arn'],
-                            'session_name' => $client['iam_access']['session_name'],
-                        ],
-                        'version' => $iAMApiVersion
+                        'version' => $apiVersion,
+                        'credentials' => $provider
                     ]
                 ]);
             }
 
             $adapterDefinition->setPublic(false);
-
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
             $container->setDefinition($adapterDefinitionName, $adapterDefinition);
 
