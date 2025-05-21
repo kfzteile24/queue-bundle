@@ -50,7 +50,7 @@ class Kfz24QueueExtension extends Extension
                     ]
                 ]);
             } else {
-                if (empty($client['iam_access']['web_identity_token_file']) || file_get_contents($client['iam_access']['web_identity_token_file'])) {
+                if (empty($client['iam_access']['web_identity_token_file']) || !file_get_contents($client['iam_access']['web_identity_token_file'])) {
                     throw new \Exception('A valid web_identity_token_file should be specified for IAM Access!');
                 }
                 $adapterDefinition = new Definition($adapterClass, [
