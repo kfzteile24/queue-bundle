@@ -38,7 +38,7 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (empty($client['role_based'])) {
+            if (empty($client['role_based']) || empty($client['role_based']['web_identity_token_file'])) {
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
@@ -51,9 +51,6 @@ class Kfz24QueueExtension extends Extension
                     ]
                 ]);
             } else {
-                if (empty($client['role_based']['web_identity_token_file'])) {
-                    throw new \Exception('A valid web_identity_token_file should be specified for Role Access!');
-                }
                 $stsClient = new StsClient([
                     'region'      => $client['region'],
                     'version'     => $apiVersion,
