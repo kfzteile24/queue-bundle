@@ -54,6 +54,7 @@ class Kfz24QueueExtension extends Extension
                 ]);
             } else {
                 echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
+                echo '[SQS-Bundle] File is: ' . $client['role_based']['web_identity_token_file'] . PHP_EOL;
 
                 $stsClient = new StsClient([
                     'region'      => $client['region'],
