@@ -43,7 +43,7 @@ class Kfz24QueueExtension extends Extension
                 $validToken = true;
             }
 
-            if ($validToken) {
+            if (!$validToken) {
                 echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
 
                 $adapterDefinition = new Definition($adapterClass, [
