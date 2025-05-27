@@ -38,7 +38,12 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (isset($client['role_based']) && empty($client['role_based']['web_identity_token_file'])) {
+            $validToken = false;
+            if (isset($client['role_based']) && $this->isTokenFileValid($client['role_based']['web_identity_token_file'])) {
+                $validToken = true;
+            }
+
+            if ($validToken) {
                 echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
 
                 $adapterDefinition = new Definition($adapterClass, [
@@ -176,5 +181,22 @@ class Kfz24QueueExtension extends Extension
         ]);
 
         $container->setDefinition($definitionName, $s3ClientDefinition);
+    }
+
+    /**
+     * @param string|null $tokenFilePath
+     * @return bool
+     */
+    private function isTokenFileValid(?string $tokenFilePath): bool
+    {
+        if (empty($tokenFilePath)) {
+            return false;
+        }
+
+        if (!file_exists($tokenFilePath)) {
+            return false;
+        }
+
+        return !((file_get_contents($tokenFilePath) === false));
     }
 }
