@@ -39,6 +39,8 @@ class Kfz24QueueExtension extends Extension
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
             if (isset($client['role_based']) && empty($client['role_based']['web_identity_token_file'])) {
+                echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
+
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
@@ -51,6 +53,8 @@ class Kfz24QueueExtension extends Extension
                     ]
                 ]);
             } else {
+                echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
+
                 $stsClient = new StsClient([
                     'region'      => $client['region'],
                     'version'     => $apiVersion,
@@ -68,6 +72,7 @@ class Kfz24QueueExtension extends Extension
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
+                        'endpoint' => $client['endpoint'],
                         'version' => $apiVersion,
                         'credentials' => $provider
                     ]
