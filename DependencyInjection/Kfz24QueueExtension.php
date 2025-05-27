@@ -38,7 +38,7 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (empty($client['role_based']) || empty($client['role_based']['web_identity_token_file'])) {
+            if (!isset($client['role_based'])) {
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
