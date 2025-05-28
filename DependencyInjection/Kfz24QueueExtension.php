@@ -59,20 +59,20 @@ class Kfz24QueueExtension extends Extension
                     ]
                 ]);
             } else {
-                echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
-                echo '[SQS-Bundle] File is: ' . $client['role_based']['web_identity_token_file'] . PHP_EOL;
-
-                $stsClient = new StsClient([
-                    'region'      => $client['region'],
-                    'version'     => $apiVersion,
-                    'credentials' => [
-                        'webIdentityTokenFile' => $client['role_based']['web_identity_token_file'],
-                        'roleArn' => $client['role_based']['role_arn'],
-                        'roleSessionName' => $client['role_based']['session_name'],
-                    ]
-                ]);
-
                 if (!$provider) {
+                    echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
+                    echo '[SQS-Bundle] File is: ' . $client['role_based']['web_identity_token_file'] . PHP_EOL;
+
+                    $stsClient = new StsClient([
+                        'region'      => $client['region'],
+                        'version'     => $apiVersion,
+                        'credentials' => [
+                            'webIdentityTokenFile' => $client['role_based']['web_identity_token_file'],
+                            'roleArn' => $client['role_based']['role_arn'],
+                            'roleSessionName' => $client['role_based']['session_name'],
+                        ]
+                    ]);
+
                     $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
                     // Cache the results in a memoize function to avoid loading and parsing
                     // the ini file on every API operation
