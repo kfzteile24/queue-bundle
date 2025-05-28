@@ -32,6 +32,7 @@ class Kfz24QueueExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');
 
+        $provider = null;
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
@@ -71,10 +72,13 @@ class Kfz24QueueExtension extends Extension
                     ]
                 ]);
 
-                $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
-                // Cache the results in a memoize function to avoid loading and parsing
-                // the ini file on every API operation
-                $provider = CredentialProvider::memoize($provider);
+                if (!$provider) {
+                    $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
+                    // Cache the results in a memoize function to avoid loading and parsing
+                    // the ini file on every API operation
+                    $provider = CredentialProvider::memoize($provider);
+                }
+
                 $adapterDefinition = new Definition($adapterClass, [
                     [
                         'region' => $client['region'],
@@ -113,7 +117,8 @@ class Kfz24QueueExtension extends Extension
                     $this->buildS3ClientDefinition(
                         $s3DefinitionName,
                         $client['large_payload_client'],
-                        $container
+                        $container,
+                        $provider
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -159,22 +164,28 @@ class Kfz24QueueExtension extends Extension
      * @param string $definitionName
      * @param array $config
      * @param ContainerBuilder $container
+     * @param null|mixed $provider
      */
-    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container): void
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, $provider = null): void
     {
         $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
             $config['use_path_style_endpoint'],
             true
         );
 
+        $credentials = [
+            'key' => $config['access_key'],
+            'secret' => $config['secret_access_key'],
+        ];
+        if ($provider !== null) {
+            $credentials = $provider;
+        }
+
         $s3ClientDefinition = new Definition(S3Client::class, [
             [
                 'region' => $config['region'],
                 'endpoint' => $config['endpoint'],
-                'credentials' => [
-                    'key' => $config['access_key'],
-                    'secret' => $config['secret_access_key']
-                ],
+                'credentials' => $credentials,
                 'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
                 'version' => '2006-03-01',
             ],
