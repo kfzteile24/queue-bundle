@@ -66,11 +66,7 @@ class Kfz24QueueExtension extends Extension
                     $stsClient = new StsClient([
                         'region'      => $client['region'],
                         'version'     => $apiVersion,
-                        'credentials' => [
-                            'webIdentityTokenFile' => $client['role_based']['web_identity_token_file'],
-                            'roleArn' => $client['role_based']['role_arn'],
-                            'roleSessionName' => $client['role_based']['session_name'],
-                        ]
+                        'credentials' => false,
                     ]);
 
                     $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
