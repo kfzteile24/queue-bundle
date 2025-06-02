@@ -37,7 +37,15 @@ class Kfz24QueueExtension extends Extension
 
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
-        $shouldUseToken = !empty(getenv(self::USE_WEB_TOKEN));
+
+        $shouldUseToken = true;
+        if (is_array(getenv(self::USE_WEB_TOKEN)) || !getenv(self::USE_WEB_TOKEN)) {
+            $shouldUseToken = false;
+        }
+        if (getenv(self::USE_WEB_TOKEN) !== "1") {
+            $shouldUseToken = false;
+        }
+
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
 
         $provider = null;
