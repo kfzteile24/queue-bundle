@@ -35,6 +35,7 @@ class Kfz24QueueExtension extends Extension
 
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
+        $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
 
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
@@ -43,7 +44,7 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (!$this->isTokenFileValid($tokenFromEnv)) {
+            if (!$isTokenValidOption) {
                 echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
 
                 $adapterDefinition = new Definition($adapterClass, [
@@ -60,7 +61,7 @@ class Kfz24QueueExtension extends Extension
             } else {
                 if (!$provider) {
                     echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
-                    echo '[SQS-Bundle] File is: ' . $client['role_based']['web_identity_token_file'] . PHP_EOL;
+                    echo '[SQS-Bundle] File is: ' . $tokenFromEnv . PHP_EOL;
 
                     $provider = new AssumeRoleWithWebIdentityCredentialProvider([
                         'RoleArn' => $arnFromEnv,
@@ -205,6 +206,10 @@ class Kfz24QueueExtension extends Extension
         }
 
         if (!file_exists($tokenFilePath)) {
+            return false;
+        }
+
+        if (strpos($tokenFilePath, 'eks.amazonaws.com') === false) {
             return false;
         }
 
