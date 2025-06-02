@@ -38,7 +38,6 @@ class Kfz24QueueExtension extends Extension
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
         $shouldUseToken = !empty(getenv(self::USE_WEB_TOKEN));
-
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
 
         $provider = null;
@@ -48,51 +47,51 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (!$shouldUseToken && !$isTokenValidOption) {
-                echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
+            $adapterDefinition = new Definition($adapterClass, [
+                [
+                    'region' => $client['region'],
+                    'endpoint' => $client['endpoint'],
+                    'credentials' => [
+                        'key' => $client['access_key'],
+                        'secret' => $client['secret_access_key']
+                    ],
+                    'version' => $apiVersion
+                ]
+            ]);
 
-                $adapterDefinition = new Definition($adapterClass, [
-                    [
-                        'region' => $client['region'],
-                        'endpoint' => $client['endpoint'],
-                        'credentials' => [
-                            'key' => $client['access_key'],
-                            'secret' => $client['secret_access_key']
-                        ],
-                        'version' => $apiVersion
-                    ]
-                ]);
-            } else {
-                if (!$provider) {
-                    echo '[SQS-Bundle] Web token option selected : ' . getenv(self::USE_WEB_TOKEN) . PHP_EOL;
-                    echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
-                    echo '[SQS-Bundle] File is: ' . $tokenFromEnv . PHP_EOL;
+            if ($shouldUseToken) {
+                if ($isTokenValidOption) {
+                    if (!$provider) {
+                        echo '[SQS-Bundle] Web token option selected : ' . getenv(self::USE_WEB_TOKEN) . PHP_EOL;
+                        echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
+                        echo '[SQS-Bundle] File is: ' . $tokenFromEnv . PHP_EOL;
 
-                    $provider = new AssumeRoleWithWebIdentityCredentialProvider([
-                        'RoleArn' => $arnFromEnv,
-                        'WebIdentityTokenFile' => $tokenFromEnv,
-                        'SessionName' => 'aws-sdk-' . time(),
-                        'client' => new StsClient([
-                            'region'      => $client['region'],
-                            'version'     => $apiVersion,
-                            'credentials' => false
-                        ]),
-                        'region' => $client['region'],
-                        'source' => null
+                        $provider = new AssumeRoleWithWebIdentityCredentialProvider([
+                            'RoleArn' => $arnFromEnv,
+                            'WebIdentityTokenFile' => $tokenFromEnv,
+                            'SessionName' => 'aws-sdk-' . time(),
+                            'client' => new StsClient([
+                                'region'      => $client['region'],
+                                'version'     => $apiVersion,
+                                'credentials' => false
+                            ]),
+                            'region' => $client['region'],
+                            'source' => null
+                        ]);
+                        // Cache the results in a memoize function to avoid loading and parsing
+                        // the ini file on every API operation
+                        //$provider = CredentialProvider::memoize($provider);
+                    }
+
+                    $adapterDefinition = new Definition($adapterClass, [
+                        [
+                            'region' => $client['region'],
+                            'endpoint' => $client['endpoint'],
+                            'version' => $apiVersion,
+                            'credentials' => $provider
+                        ]
                     ]);
-                    // Cache the results in a memoize function to avoid loading and parsing
-                    // the ini file on every API operation
-                    //$provider = CredentialProvider::memoize($provider);
                 }
-
-                $adapterDefinition = new Definition($adapterClass, [
-                    [
-                        'region' => $client['region'],
-                        'endpoint' => $client['endpoint'],
-                        'version' => $apiVersion,
-                        'credentials' => $provider
-                    ]
-                ]);
             }
 
             $adapterDefinition->setPublic(false);
