@@ -2,6 +2,7 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
+use Aws\Credentials\AssumeRoleWithWebIdentityCredentialProvider;
 use Aws\S3\S3Client;
 use Kfz24\QueueBundle\Client\Aws\LargePayloadMessageExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -32,6 +33,9 @@ class Kfz24QueueExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');
 
+        $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
+        $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
+
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
@@ -39,12 +43,8 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            $validToken = false;
-            if (isset($client['role_based']) && $this->isTokenFileValid($client['role_based']['web_identity_token_file'])) {
-                $validToken = true;
-            }
 
-            if (!$validToken) {
+            if (empty($arnFromEnv) && empty($tokenFromEnv)) {
                 echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
 
                 $adapterDefinition = new Definition($adapterClass, [
@@ -63,10 +63,21 @@ class Kfz24QueueExtension extends Extension
                     echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
                     echo '[SQS-Bundle] File is: ' . $client['role_based']['web_identity_token_file'] . PHP_EOL;
 
-                    $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['region' => $client['region']]);
+                    $provider = new AssumeRoleWithWebIdentityCredentialProvider([
+                        'RoleArn' => $arnFromEnv,
+                        'WebIdentityTokenFile' => $tokenFromEnv,
+                        'SessionName' => 'aws-sdk-' . time(),
+                        'client' => new StsClient([
+                            'region'      => $client['region'],
+                            'version'     => $apiVersion,
+                            'credentials' => false
+                        ]),
+                        'region' => $client['region'],
+                        'source' => null
+                    ]);
                     // Cache the results in a memoize function to avoid loading and parsing
                     // the ini file on every API operation
-                    $provider = CredentialProvider::memoize($provider);
+                    //$provider = CredentialProvider::memoize($provider);
                 }
 
                 $adapterDefinition = new Definition($adapterClass, [
