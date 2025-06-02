@@ -63,13 +63,7 @@ class Kfz24QueueExtension extends Extension
                     echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
                     echo '[SQS-Bundle] File is: ' . $client['role_based']['web_identity_token_file'] . PHP_EOL;
 
-                    $stsClient = new StsClient([
-                        'region'      => $client['region'],
-                        'version'     => $apiVersion,
-                        'credentials' => false,
-                    ]);
-
-                    $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
+                    $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['region' => $client['region']]);
                     // Cache the results in a memoize function to avoid loading and parsing
                     // the ini file on every API operation
                     $provider = CredentialProvider::memoize($provider);
