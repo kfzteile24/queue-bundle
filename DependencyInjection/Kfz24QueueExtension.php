@@ -43,8 +43,7 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-
-            if (empty($arnFromEnv) && empty($tokenFromEnv)) {
+            if (!$this->isTokenFileValid($tokenFromEnv)) {
                 echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
 
                 $adapterDefinition = new Definition($adapterClass, [
