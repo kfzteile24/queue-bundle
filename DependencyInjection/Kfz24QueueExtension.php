@@ -21,6 +21,8 @@ use Aws\Credentials\CredentialProvider;
  */
 class Kfz24QueueExtension extends Extension
 {
+    private const USE_WEB_TOKEN = 'USE_WEB_TOKEN';
+
     /**
      * {@inheritdoc}
      * @throws \Exception
@@ -35,6 +37,8 @@ class Kfz24QueueExtension extends Extension
 
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
+        $shouldUseToken = !empty(getenv(self::USE_WEB_TOKEN));
+
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
 
         $provider = null;
@@ -44,7 +48,7 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (!$isTokenValidOption) {
+            if (!$shouldUseToken && !$isTokenValidOption) {
                 echo '[SQS-Bundle] Role-based access denied due to no token file. Accessing via keys...' . PHP_EOL;
 
                 $adapterDefinition = new Definition($adapterClass, [
@@ -60,6 +64,7 @@ class Kfz24QueueExtension extends Extension
                 ]);
             } else {
                 if (!$provider) {
+                    echo '[SQS-Bundle] Web token option selected : ' . getenv(self::USE_WEB_TOKEN) . PHP_EOL;
                     echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
                     echo '[SQS-Bundle] File is: ' . $tokenFromEnv . PHP_EOL;
 
