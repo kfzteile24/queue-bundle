@@ -47,9 +47,6 @@ class Kfz24QueueExtension extends Extension
             $shouldUseToken = false;
         }
 
-        $message = "[SQS-Bundle] Token env is: $tokenFromEnv --- Arn role is: $arnFromEnv --- " . PHP_EOL;
-        file_put_contents('/www/data/db-dump/logs12.txt', $message, FILE_APPEND);
-
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
@@ -71,7 +68,6 @@ class Kfz24QueueExtension extends Extension
                             'WebIdentityTokenFile' => $tokenFromEnv,
                             'SessionName' => 'aws-sdk-' . time(),
                             'client' => new StsClient([
-                                'credentials' => false,
                                 'region' => $client['region'],
                                 'version' => $apiVersion
                             ]),
@@ -88,7 +84,8 @@ class Kfz24QueueExtension extends Extension
             $configs = [
                 'region' => $client['region'],
                 'credentials' => $credentials,
-                'version' => $apiVersion
+                'version' => $apiVersion,
+                'debug' => true,
             ];
 
             if ($endpoint) {
@@ -194,6 +191,7 @@ class Kfz24QueueExtension extends Extension
                 'credentials' => $credentials,
                 'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
                 'version' => '2006-03-01',
+                'debug' => true,
             ],
         ]);
 
