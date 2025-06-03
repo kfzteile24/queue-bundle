@@ -62,8 +62,6 @@ class Kfz24QueueExtension extends Extension
                         'web_identity_token_file' => $tokenFromEnv, // Default path in EKS
                         'role_arn' =>  $arnFromEnv,
                     ];
-
-                    $apiVersion = 'latest';
                 }
             }
 
@@ -105,8 +103,7 @@ class Kfz24QueueExtension extends Extension
                         $s3DefinitionName,
                         $client['large_payload_client'],
                         $container,
-                        $credentials,
-                        $apiVersion
+                        $credentials
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -153,9 +150,8 @@ class Kfz24QueueExtension extends Extension
      * @param array $config
      * @param ContainerBuilder $container
      * @param array $credentials
-     * @param string $apiVersion
      */
-    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $credentials, string $apiVersion): void
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $credentials): void
     {
         $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
             $config['use_path_style_endpoint'],
@@ -168,7 +164,7 @@ class Kfz24QueueExtension extends Extension
                 'endpoint' => $config['endpoint'],
                 'credentials' => $credentials,
                 'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
-                'version' => $apiVersion,
+                'version' => '2006-03-01',
             ],
         ]);
 
