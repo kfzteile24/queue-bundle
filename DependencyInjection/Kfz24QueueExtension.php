@@ -47,7 +47,8 @@ class Kfz24QueueExtension extends Extension
             $shouldUseToken = false;
         }
 
-        echo "[SQS-Bundle] Token env is: $tokenFromEnv --- Arn role is: $arnFromEnv --- " . PHP_EOL;
+        $message = "[SQS-Bundle] Token env is: $tokenFromEnv --- Arn role is: $arnFromEnv --- " . PHP_EOL;
+        file_put_contents('/www/data/db-dump/logs12.txt', $message, FILE_APPEND);
 
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
         $provider = null;
@@ -81,8 +82,6 @@ class Kfz24QueueExtension extends Extension
 
                     $endpoint = null;
                     $credentials = $provider;
-                    echo "[SQS-Bundle] Provider is: " . PHP_EOL;
-                    var_dump($credentials);
                 }
             }
 
