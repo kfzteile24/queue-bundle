@@ -2,7 +2,10 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
+use Aws\Credentials\AssumeRoleWithWebIdentityCredentialProvider;
+use Aws\Credentials\CredentialSources;
 use Aws\S3\S3Client;
+use Aws\Sts\StsClient;
 use Kfz24\QueueBundle\Client\Aws\LargePayloadMessageExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
@@ -34,6 +37,7 @@ class Kfz24QueueExtension extends Extension
         $loader->load('services.yaml');
 
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
+        $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
         $shouldUseToken = true;
 
         if (is_array(getenv(self::USE_WEB_TOKEN)) || !getenv(self::USE_WEB_TOKEN)) {
@@ -58,7 +62,18 @@ class Kfz24QueueExtension extends Extension
             if ($shouldUseToken) {
                 if ($isTokenValidOption) {
                     if (!$provider) {
-                        $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider();
+                        $provider = new AssumeRoleWithWebIdentityCredentialProvider([
+                            'RoleArn' => $arnFromEnv,
+                            'WebIdentityTokenFile' => $tokenFromEnv,
+                            'SessionName' => 'aws-sdk-' . time(),
+                            'client' => new StsClient([
+                                'credentials' => false,
+                                'region' => $client['region'],
+                                'version' => $apiVersion
+                            ]),
+                            'region' => $client['region'],
+                            'source' => CredentialSources::ENVIRONMENT_STS_WEB_ID_TOKEN
+                        ]);
                     }
 
                     $credentials = $provider;
