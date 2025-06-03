@@ -2,7 +2,6 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
-use Aws\Credentials\AssumeRoleWithWebIdentityCredentialProvider;
 use Aws\S3\S3Client;
 use Kfz24\QueueBundle\Client\Aws\LargePayloadMessageExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -11,7 +10,6 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader;
-use Aws\Sts\StsClient;
 use Aws\Credentials\CredentialProvider;
 
 /**
@@ -47,60 +45,36 @@ class Kfz24QueueExtension extends Extension
         }
 
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
-
-        $provider = null;
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
+            $credentials = [
+                'key' => $client['access_key'],
+                'secret' => $client['secret_access_key']
+            ];
+
+            if ($shouldUseToken) {
+                if ($isTokenValidOption) {
+                    $credentials = [
+                        'web_identity_token_file' => $tokenFromEnv, // Default path in EKS
+                        'role_arn' =>  $arnFromEnv,
+                    ];
+
+                    $apiVersion = 'latest';
+                }
+            }
+
             $adapterDefinition = new Definition($adapterClass, [
                 [
                     'region' => $client['region'],
                     'endpoint' => $client['endpoint'],
-                    'credentials' => [
-                        'key' => $client['access_key'],
-                        'secret' => $client['secret_access_key']
-                    ],
+                    'credentials' => $credentials,
                     'version' => $apiVersion
                 ]
             ]);
-
-            if ($shouldUseToken) {
-                if ($isTokenValidOption) {
-                    if (!$provider) {
-                        echo '[SQS-Bundle] Web token option selected : ' . getenv(self::USE_WEB_TOKEN) . PHP_EOL;
-                        echo '[SQS-Bundle] Role-based access approved. Accessing via identity token...' . PHP_EOL;
-                        echo '[SQS-Bundle] File is: ' . $tokenFromEnv . PHP_EOL;
-
-                        $provider = new AssumeRoleWithWebIdentityCredentialProvider([
-                            'RoleArn' => $arnFromEnv,
-                            'WebIdentityTokenFile' => $tokenFromEnv,
-                            'SessionName' => 'aws-sdk-' . time(),
-                            'client' => new StsClient([
-                                'region'      => $client['region'],
-                                'version'     => $apiVersion,
-                                'credentials' => false
-                            ]),
-                            'region' => $client['region'],
-                            'source' => null
-                        ]);
-                        // Cache the results in a memoize function to avoid loading and parsing
-                        // the ini file on every API operation
-                        //$provider = CredentialProvider::memoize($provider);
-                    }
-
-                    $adapterDefinition = new Definition($adapterClass, [
-                        [
-                            'region' => $client['region'],
-                            'endpoint' => $client['endpoint'],
-                            'version' => $apiVersion,
-                            'credentials' => $provider
-                        ]
-                    ]);
-                }
-            }
 
             $adapterDefinition->setPublic(false);
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
@@ -131,7 +105,7 @@ class Kfz24QueueExtension extends Extension
                         $s3DefinitionName,
                         $client['large_payload_client'],
                         $container,
-                        $provider
+                        $credentials
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -177,22 +151,14 @@ class Kfz24QueueExtension extends Extension
      * @param string $definitionName
      * @param array $config
      * @param ContainerBuilder $container
-     * @param null|mixed $provider
+     * @param array $credentials
      */
-    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, $provider = null): void
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $credentials): void
     {
         $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
             $config['use_path_style_endpoint'],
             true
         );
-
-        $credentials = [
-            'key' => $config['access_key'],
-            'secret' => $config['secret_access_key'],
-        ];
-        if ($provider !== null) {
-            $credentials = $provider;
-        }
 
         $s3ClientDefinition = new Definition(S3Client::class, [
             [
