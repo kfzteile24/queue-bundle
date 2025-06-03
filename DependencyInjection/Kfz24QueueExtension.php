@@ -47,6 +47,8 @@ class Kfz24QueueExtension extends Extension
             $shouldUseToken = false;
         }
 
+        echo "[SQS-Bundle] Token env is: $tokenFromEnv --- Arn role is: $arnFromEnv --- " . PHP_EOL;
+
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
@@ -58,6 +60,7 @@ class Kfz24QueueExtension extends Extension
                 'key' => $client['access_key'],
                 'secret' => $client['secret_access_key']
             ];
+            $endpoint = $client['endpoint'];
 
             if ($shouldUseToken) {
                 if ($isTokenValidOption) {
@@ -76,19 +79,23 @@ class Kfz24QueueExtension extends Extension
                         ]);
                     }
 
+                    $endpoint = null;
                     $credentials = $provider;
+                    echo "[SQS-Bundle] Provider is: " . PHP_EOL;
+                    var_dump($credentials);
                 }
             }
 
-            $adapterDefinition = new Definition($adapterClass, [
-                [
-                    'region' => $client['region'],
-                    'endpoint' => $client['endpoint'],
-                    'credentials' => $credentials,
-                    'version' => $apiVersion
-                ]
-            ]);
+            $configs = [
+                'region' => $client['region'],
+                'credentials' => $credentials,
+                'version' => $apiVersion
+            ];
 
+            if ($endpoint) {
+                $configs['endpoint'] = $endpoint;
+            }
+            $adapterDefinition = new Definition($adapterClass, [$configs]);
             $adapterDefinition->setPublic(false);
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
             $container->setDefinition($adapterDefinitionName, $adapterDefinition);
