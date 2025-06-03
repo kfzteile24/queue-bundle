@@ -33,10 +33,9 @@ class Kfz24QueueExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');
 
-        $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
-
         $shouldUseToken = true;
+
         if (is_array(getenv(self::USE_WEB_TOKEN)) || !getenv(self::USE_WEB_TOKEN)) {
             $shouldUseToken = false;
         }
@@ -45,12 +44,12 @@ class Kfz24QueueExtension extends Extension
         }
 
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
+        $provider = null;
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
-
             $credentials = [
                 'key' => $client['access_key'],
                 'secret' => $client['secret_access_key']
@@ -58,10 +57,11 @@ class Kfz24QueueExtension extends Extension
 
             if ($shouldUseToken) {
                 if ($isTokenValidOption) {
-                    $credentials = [
-                        'web_identity_token_file' => $tokenFromEnv, // Default path in EKS
-                        'role_arn' =>  $arnFromEnv,
-                    ];
+                    if (!$provider) {
+                        $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider();
+                    }
+
+                    $credentials = $provider;
                 }
             }
 
@@ -103,7 +103,7 @@ class Kfz24QueueExtension extends Extension
                         $s3DefinitionName,
                         $client['large_payload_client'],
                         $container,
-                        $credentials
+                        $provider
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -149,14 +149,22 @@ class Kfz24QueueExtension extends Extension
      * @param string $definitionName
      * @param array $config
      * @param ContainerBuilder $container
-     * @param array $credentials
+     * @param null|mixed $provider
      */
-    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $credentials): void
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, $provider = null): void
     {
         $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
             $config['use_path_style_endpoint'],
             true
         );
+
+        $credentials = [
+            'key' => $config['access_key'],
+            'secret' => $config['secret_access_key']
+        ];
+        if ($provider !== null) {
+            $credentials = $provider;
+        }
 
         $s3ClientDefinition = new Definition(S3Client::class, [
             [
