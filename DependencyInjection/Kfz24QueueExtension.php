@@ -105,7 +105,8 @@ class Kfz24QueueExtension extends Extension
                         $s3DefinitionName,
                         $client['large_payload_client'],
                         $container,
-                        $credentials
+                        $credentials,
+                        $apiVersion
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -152,8 +153,9 @@ class Kfz24QueueExtension extends Extension
      * @param array $config
      * @param ContainerBuilder $container
      * @param array $credentials
+     * @param string $apiVersion
      */
-    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $credentials): void
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $credentials, string $apiVersion): void
     {
         $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
             $config['use_path_style_endpoint'],
@@ -166,7 +168,7 @@ class Kfz24QueueExtension extends Extension
                 'endpoint' => $config['endpoint'],
                 'credentials' => $credentials,
                 'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
-                'version' => '2006-03-01',
+                'version' => $apiVersion,
             ],
         ]);
 
