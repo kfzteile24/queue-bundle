@@ -67,6 +67,7 @@ class Kfz24QueueExtension extends Extension
                             'RoleArn' => $arnFromEnv,
                             'WebIdentityTokenFile' => $tokenFromEnv,
                             'SessionName' => 'aws-sdk-' . time(),
+                            'region' => $client['region'],
                             'client' => new StsClient([
                                 'region' => $client['region'],
                                 'version' => $apiVersion
