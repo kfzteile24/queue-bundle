@@ -47,9 +47,6 @@ class Kfz24QueueExtension extends Extension
             $shouldUseToken = false;
         }
 
-        $tokenFromEnv = '/var/run/secrets/eks.amazonaws.com/serviceaccount/token';
-        $arnFromEnv = 'arn:aws:iam::726569450381:role/k24-integration-2-default-search-service';
-
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
@@ -64,22 +61,20 @@ class Kfz24QueueExtension extends Extension
             $endpoint = $client['endpoint'];
 
             if ($shouldUseToken) {
-                if ($isTokenValidOption) {
-                    if (!$provider) {
-                        $provider = CredentialProvider::memoize(
-                            new AssumeRoleWithWebIdentityCredentialProvider([
-                                'RoleArn' => $arnFromEnv,
-                                'WebIdentityTokenFile' => $tokenFromEnv,
-                                'SessionName' => 'aws-sdk-' . time(),
+                if (!$provider) {
+                    $provider = CredentialProvider::memoize(
+                        new AssumeRoleWithWebIdentityCredentialProvider([
+                            'RoleArn' => $arnFromEnv,
+                            'WebIdentityTokenFile' => $tokenFromEnv,
+                            'SessionName' => 'aws-sdk-' . time(),
+                            'region' => $client['region'],
+                            'client' => new StsClient([
+                                'credentials' => false,
                                 'region' => $client['region'],
-                                'client' => new StsClient([
-                                    'credentials' => false,
-                                    'region' => $client['region'],
-                                    'version' => 'latest',
-                                ]),
-                            ])
-                        );
-                    }
+                                'version' => 'latest',
+                            ]),
+                        ])
+                    );
                 }
             }
 
