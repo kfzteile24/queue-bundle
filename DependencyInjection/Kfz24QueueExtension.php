@@ -61,6 +61,10 @@ class Kfz24QueueExtension extends Extension
             $endpoint = $client['endpoint'];
 
             if ($shouldUseToken) {
+
+                echo "[SQS] Token is: $tokenFromEnv" . PHP_EOL;
+                echo "[SQS] ARN is: $arnFromEnv" . PHP_EOL;
+
                 if ($isTokenValidOption) {
                     if (!$provider) {
                         $provider = CredentialProvider::memoize(
@@ -78,6 +82,11 @@ class Kfz24QueueExtension extends Extension
                         );
                     }
                 }
+
+                echo "[SQS] Provider is: " . PHP_EOL;
+                var_dump($provider);
+
+                die();
             }
 
             $configs = [
