@@ -159,13 +159,15 @@ class SqsClient extends AbstractAwsClient
     {
         $options[self::RESOURCE_NAME] = $this->resource;
 
+        echo "[SQS] OPTIONS: " . PHP_EOL;
+        var_dump($options);
+
         try {
             /** @var Result $result */
             $result = parent::getQueueAttributes($options);
 
             return $result->get(self::ATTRIBUTES);
         } catch (\Throwable $exception) {
-            $this->logger->critical("[SQSBundle] Error: " . $exception->getMessage());
             $this->logger->critical("[SQSBundle] Resource: " . $this->resource);
             $this->logger->critical(
                 "[SQSBundle] Endpoint: " . $this->client->getEndpoint()->getPath() . " // " .
