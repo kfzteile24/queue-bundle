@@ -63,12 +63,18 @@ class Kfz24QueueExtension extends Extension
             if ($shouldUseToken) {
                 if ($isTokenValidOption) {
                     if (!$provider) {
-                        $provider = (new AssumeRoleWithWebIdentityCredentialProvider([
-                            'RoleArn' => $arnFromEnv,
-                            'WebIdentityTokenFile' => $tokenFromEnv,
-                            'SessionName' => 'aws-sdk-' . time(),
-                            'region' => $client['region'],
-                        ]))->__invoke();
+                        $provider = CredentialProvider::memoize(
+                            new AssumeRoleWithWebIdentityCredentialProvider([
+                                'RoleArn' => $arnFromEnv,
+                                'WebIdentityTokenFile' => $tokenFromEnv,
+                                'SessionName' => 'aws-sdk-' . time(),
+                                'client' => new StsClient([
+                                    'credentials' => false,
+                                    'region' => $client['region'],
+                                    'version' => $apiVersion,
+                                ]),
+                            ])
+                        );
                     }
 
                     $credentials = $provider;
