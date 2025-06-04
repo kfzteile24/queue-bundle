@@ -68,14 +68,9 @@ class Kfz24QueueExtension extends Extension
                             'WebIdentityTokenFile' => $tokenFromEnv,
                             'SessionName' => 'aws-sdk-' . time(),
                             'region' => $client['region'],
-                            'client' => new StsClient([
-                                'region' => $client['region'],
-                                'version' => $apiVersion
-                            ]),
                         ]))->__invoke();
                     }
 
-                    $endpoint = null;
                     $credentials = $provider;
                 }
             }
@@ -84,12 +79,10 @@ class Kfz24QueueExtension extends Extension
                 'region' => $client['region'],
                 'credentials' => $credentials,
                 'version' => $apiVersion,
+                'endpoint' => $endpoint,
                 'debug' => true,
             ];
 
-            if ($endpoint) {
-                $configs['endpoint'] = $endpoint;
-            }
             $adapterDefinition = new Definition($adapterClass, [$configs]);
             $adapterDefinition->setPublic(false);
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
