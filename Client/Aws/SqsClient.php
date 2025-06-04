@@ -159,20 +159,10 @@ class SqsClient extends AbstractAwsClient
     {
         $options[self::RESOURCE_NAME] = $this->resource;
 
-        echo "[SQS] OPTIONS: " . PHP_EOL;
-        var_dump($options);
+        /** @var Result $result */
+        $result = parent::getQueueAttributes($options);
 
-        try {
-            /** @var Result $result */
-            $result = parent::getQueueAttributes($options);
-
-            return $result->get(self::ATTRIBUTES);
-        } catch (\Throwable $exception) {
-            echo "Provider: " . PHP_EOL;
-            var_dump($this->client->getApi()->getProvider());
-            echo "Creds: " . PHP_EOL;
-            var_dump($this->client->getCredentials());
-        }
+        return $result->get(self::ATTRIBUTES);
     }
 
     /**

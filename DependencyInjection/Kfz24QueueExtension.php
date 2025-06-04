@@ -47,6 +47,9 @@ class Kfz24QueueExtension extends Extension
             $shouldUseToken = false;
         }
 
+        $tokenFromEnv = '/var/run/secrets/eks.amazonaws.com/serviceaccount/token';
+        $arnFromEnv = 'arn:aws:iam::726569450381:role/k24-integration-2-default-search-service';
+
         $isTokenValidOption = $this->isTokenFileValid($tokenFromEnv);
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
@@ -61,10 +64,6 @@ class Kfz24QueueExtension extends Extension
             $endpoint = $client['endpoint'];
 
             if ($shouldUseToken) {
-
-                echo "[SQS] Token is: $tokenFromEnv" . PHP_EOL;
-                echo "[SQS] ARN is: $arnFromEnv" . PHP_EOL;
-
                 if ($isTokenValidOption) {
                     if (!$provider) {
                         $provider = CredentialProvider::memoize(
@@ -82,11 +81,6 @@ class Kfz24QueueExtension extends Extension
                         );
                     }
                 }
-
-                echo "[SQS] Provider is: " . PHP_EOL;
-                var_dump($provider);
-
-                die();
             }
 
             $configs = [
