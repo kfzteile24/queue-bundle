@@ -159,10 +159,32 @@ class SqsClient extends AbstractAwsClient
     {
         $options[self::RESOURCE_NAME] = $this->resource;
 
-        /** @var Result $result */
-        $result = parent::getQueueAttributes($options);
+        try {
+            /** @var Result $result */
+            $result = parent::getQueueAttributes($options);
 
-        return $result->get(self::ATTRIBUTES);
+            return $result->get(self::ATTRIBUTES);
+        } catch (\Throwable $exception) {
+            $this->logger->critical("[SQSBundle] Error: " . $exception->getMessage());
+            $this->logger->critical("[SQSBundle] Resource: " . $this->resource);
+            $this->logger->critical(
+                "[SQSBundle] Endpoint: " . $this->client->getEndpoint()->getPath() . " // " .
+                $this->client->getEndpoint()->getHost() . " // " . $this->client->getEndpoint()->getPort() . " // " . $this->client->getEndpoint()->getScheme()
+                . " // " . $this->client->getEndpoint()->getUserInfo() . " // " . $this->client->getEndpoint()->getAuthority()
+            );
+            $this->logger->critical("[SQSBundle] Creds: " . $this->client->getCredentials()->getState());
+            $this->logger->critical("[SQSBundle] Config: " . $this->client->getConfig());
+            $this->logger->critical(
+                "[SQSBundle] API: " . $this->client->getApi()->getApiVersion() . " // " . $this->client->getApi()->getSignatureVersion()
+                . " // " . $this->client->getApi()->getProtocol() . $this->client->getApi()->getServiceFullName() . " // " . $this->client->getApi()->getServiceName()
+                . " // " . $this->client->getApi()->getEndpointPrefix() . " // " . $this->client->getApi()->getServiceId()
+            );
+
+            echo "Provider: " . PHP_EOL;
+            var_dump($this->client->getApi()->getProvider());
+            echo "Creds: " . PHP_EOL;
+            var_dump($this->client->getCredentials());
+        }
     }
 
     /**
