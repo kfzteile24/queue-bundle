@@ -62,8 +62,10 @@ class Kfz24QueueExtension extends Extension
 
             if ($shouldUseToken) {
                 if (!$provider) {
-                    $provider = CredentialProvider::memoize(
-                        new AssumeRoleWithWebIdentityCredentialProvider([
+                    try {
+                        $contents = file_get_contents($tokenFromEnv);
+
+                        $assumeRoleProvider = new AssumeRoleWithWebIdentityCredentialProvider([
                             'RoleArn' => $arnFromEnv,
                             'WebIdentityTokenFile' => $tokenFromEnv,
                             'SessionName' => 'aws-sdk-' . time(),
@@ -73,8 +75,12 @@ class Kfz24QueueExtension extends Extension
                                 'region' => $client['region'],
                                 'version' => 'latest',
                             ]),
-                        ])
-                    );
+                        ]);
+
+                        $provider = CredentialProvider::memoize($assumeRoleProvider);
+                    } catch (\Throwable $exception) {
+                        throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
+                    }
                 }
             }
 
