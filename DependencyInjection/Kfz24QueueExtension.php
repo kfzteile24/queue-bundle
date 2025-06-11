@@ -4,6 +4,7 @@ namespace Kfz24\QueueBundle\DependencyInjection;
 
 use Aws\Credentials\Credentials;
 use Aws\S3\S3Client;
+use Aws\Sqs\SqsClient;
 use Aws\Sts\StsClient;
 use Kfz24\QueueBundle\Client\Aws\LargePayloadMessageExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -54,16 +55,11 @@ class Kfz24QueueExtension extends Extension
             } else {
                 if (!$provider) {
                     try {
-                        var_dump($tokenFromEnv);
-                        $contents = file_get_contents($tokenFromEnv);
-                        var_dump($contents);
-                        die();
-
                         $stsClient = new StsClient(['region' => $client['region'], 'version' => 'latest']);
                         $provider = $stsClient->assumeRoleWithWebIdentity([
-                            'RoleArn' => $arnFromEnv,
+                            'RoleArn' => 'arn:aws:iam::726569450381:role/k24-integration-2-default-search-service',
                             'RoleSessionName' => sprintf("%s-%s", 'aws-sdk', time()),
-                            'WebIdentityToken' => $tokenFromEnv,
+                            'WebIdentityToken' => '/var/run/secrets/eks.amazonaws.com/serviceaccount/token',
                         ]);
 
                         if (!isset($provider['Credentials'])) {
@@ -75,14 +71,24 @@ class Kfz24QueueExtension extends Extension
                 }
             }
 
-            $adapterDefinition = new Definition($adapterClass, [
-                [
+            if ($client['type'] === 'sqs') {
+                $adapterDefinition = new SqsClient([
                     'region' => $client['region'],
+                    'version' => 'latest',
                     'credentials' => new Credentials($provider['Credentials']['AccessKeyId'], $provider['Credentials']['SecretAccessKey'], $provider['Credentials']['SessionToken']),
-                    'version' => $apiVersion,
                     'endpoint' => $client['endpoint'],
-                ]
-            ]);
+                ]);
+            } else {
+                $adapterDefinition = new Definition($adapterClass, [
+                    [
+                        'region' => $client['region'],
+                        'credentials' => new Credentials($provider['Credentials']['AccessKeyId'], $provider['Credentials']['SecretAccessKey'], $provider['Credentials']['SessionToken']),
+                        'version' => $apiVersion,
+                        'endpoint' => $client['endpoint'],
+                    ]
+                ]);
+            }
+
             $adapterDefinition->setPublic(false);
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
             $container->setDefinition($adapterDefinitionName, $adapterDefinition);
