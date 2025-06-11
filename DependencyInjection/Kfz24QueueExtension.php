@@ -53,9 +53,10 @@ class Kfz24QueueExtension extends Extension
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
+
             $credentials = [
-                'key' => '',
-                'secret' => ''
+                'key' => $client['access_key'],
+                'secret' => $client['secret_access_key']
             ];
             $endpoint = $client['endpoint'];
 
@@ -83,7 +84,8 @@ class Kfz24QueueExtension extends Extension
                 }
             }
 
-            if (!$provider) {
+
+            if ($shouldUseToken && !$provider) {
                 $contents = file_get_contents($tokenFromEnv);
                 throw new \Exception("[SQS-Bundle] Token is:" . $tokenFromEnv);
             }
