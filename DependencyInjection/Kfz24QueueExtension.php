@@ -95,7 +95,6 @@ class Kfz24QueueExtension extends Extension
                 'credentials' => $provider ?? $credentials,
                 'version' => $apiVersion,
                 'endpoint' => $endpoint,
-                'debug' => true,
             ];
 
             $adapterDefinition = new Definition($adapterClass, [$configs]);
