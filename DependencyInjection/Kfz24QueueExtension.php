@@ -38,14 +38,6 @@ class Kfz24QueueExtension extends Extension
 
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
-        $shouldUseToken = true;
-
-        if (is_array(getenv(self::USE_WEB_TOKEN)) || !getenv(self::USE_WEB_TOKEN)) {
-            $shouldUseToken = false;
-        }
-        if (getenv(self::USE_WEB_TOKEN) !== "1") {
-            $shouldUseToken = false;
-        }
 
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
@@ -54,13 +46,13 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            $credentials = [
-                'key' => $client['access_key'],
-                'secret' => $client['secret_access_key']
-            ];
-            $endpoint = $client['endpoint'];
-
-            if ($shouldUseToken) {
+            $credentials = [];
+            if ($this->containsKeys($client)) {
+                $credentials = [
+                    'key' => $client['access_key'],
+                    'secret' => $client['secret_access_key']
+                ];
+            } else {
                 if (!$provider) {
                     try {
                         $contents = file_get_contents($tokenFromEnv);
@@ -77,24 +69,18 @@ class Kfz24QueueExtension extends Extension
                             ]),
                         ]);
 
-                        $provider = CredentialProvider::memoize($assumeRoleProvider);
+                        $credentials = CredentialProvider::memoize($assumeRoleProvider);
                     } catch (\Throwable $exception) {
                         throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
                     }
                 }
             }
 
-
-            if ($shouldUseToken && !$provider) {
-                $contents = file_get_contents($tokenFromEnv);
-                throw new \Exception("[SQS-Bundle] Token is:" . $tokenFromEnv);
-            }
-
             $configs = [
                 'region' => $client['region'],
-                'credentials' => $provider ?? $credentials,
+                'credentials' => $credentials,
                 'version' => $apiVersion,
-                'endpoint' => $endpoint,
+                'endpoint' => $client['endpoint'],
             ];
 
             $adapterDefinition = new Definition($adapterClass, [$configs]);
@@ -127,7 +113,7 @@ class Kfz24QueueExtension extends Extension
                         $s3DefinitionName,
                         $client['large_payload_client'],
                         $container,
-                        $provider
+                        $credentials
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -182,12 +168,13 @@ class Kfz24QueueExtension extends Extension
             true
         );
 
-        $credentials = [
-            'key' => $config['access_key'],
-            'secret' => $config['secret_access_key']
-        ];
         if ($provider !== null) {
             $credentials = $provider;
+        } else {
+            $credentials = [
+                'key' => $config['access_key'],
+                'secret' => $config['secret_access_key']
+            ];
         }
 
         $s3ClientDefinition = new Definition(S3Client::class, [
@@ -197,7 +184,6 @@ class Kfz24QueueExtension extends Extension
                 'credentials' => $credentials,
                 'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
                 'version' => '2006-03-01',
-                'debug' => true,
             ],
         ]);
 
@@ -223,5 +209,18 @@ class Kfz24QueueExtension extends Extension
         }
 
         return !((file_get_contents($tokenFilePath) === false));
+    }
+
+    /**
+     * @param array $clientConfigs
+     * @return bool
+     */
+    private function containsKeys(array $clientConfigs): bool
+    {
+        if (empty($clientConfigs['access_key']) && empty($clientConfigs['secret_access_key'])) {
+            return false;
+        }
+
+        return true;
     }
 }
