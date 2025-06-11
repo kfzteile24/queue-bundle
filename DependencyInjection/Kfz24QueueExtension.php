@@ -2,11 +2,8 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
-use Aws\Credentials\AssumeRoleWithWebIdentityCredentialProvider;
 use Aws\Credentials\Credentials;
-use Aws\Credentials\CredentialSources;
 use Aws\S3\S3Client;
-use Aws\Sqs\SqsClient;
 use Aws\Sts\StsClient;
 use Kfz24\QueueBundle\Client\Aws\LargePayloadMessageExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
