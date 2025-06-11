@@ -41,6 +41,8 @@ class Kfz24QueueExtension extends Extension
 
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
+            var_dump($client);
+
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
