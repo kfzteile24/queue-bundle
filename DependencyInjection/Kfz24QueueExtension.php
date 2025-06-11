@@ -168,9 +168,12 @@ class Kfz24QueueExtension extends Extension
             true
         );
 
+        $credentials = [];
         if ($provider !== null) {
             $credentials = $provider;
-        } else {
+        }
+
+        if ($this->containsKeys($config)) {
             $credentials = [
                 'key' => $config['access_key'],
                 'secret' => $config['secret_access_key']
