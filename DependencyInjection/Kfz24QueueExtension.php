@@ -54,7 +54,10 @@ class Kfz24QueueExtension extends Extension
             } else {
                 if (!$provider) {
                     try {
+                        var_dump($tokenFromEnv);
                         $contents = file_get_contents($tokenFromEnv);
+                        var_dump($contents);
+                        die();
 
                         $stsClient = new StsClient(['region' => $client['region'], 'version' => 'latest']);
                         $provider = $stsClient->assumeRoleWithWebIdentity([
