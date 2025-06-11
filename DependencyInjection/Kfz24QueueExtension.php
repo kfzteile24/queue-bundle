@@ -60,27 +60,25 @@ class Kfz24QueueExtension extends Extension
             ];
             $endpoint = $client['endpoint'];
 
-            if ($shouldUseToken) {
-                if (!$provider) {
-                    try {
-                        $contents = file_get_contents($tokenFromEnv);
+            if (!$provider) {
+                try {
+                    $contents = file_get_contents($tokenFromEnv);
 
-                        $assumeRoleProvider = new AssumeRoleWithWebIdentityCredentialProvider([
-                            'RoleArn' => $arnFromEnv,
-                            'WebIdentityTokenFile' => $tokenFromEnv,
-                            'SessionName' => 'aws-sdk-' . time(),
+                    $assumeRoleProvider = new AssumeRoleWithWebIdentityCredentialProvider([
+                        'RoleArn' => $arnFromEnv,
+                        'WebIdentityTokenFile' => $tokenFromEnv,
+                        'SessionName' => 'aws-sdk-' . time(),
+                        'region' => $client['region'],
+                        'client' => new StsClient([
+                            'credentials' => false,
                             'region' => $client['region'],
-                            'client' => new StsClient([
-                                'credentials' => false,
-                                'region' => $client['region'],
-                                'version' => 'latest',
-                            ]),
-                        ]);
+                            'version' => 'latest',
+                        ]),
+                    ]);
 
-                        $provider = CredentialProvider::memoize($assumeRoleProvider);
-                    } catch (\Throwable $exception) {
-                        throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
-                    }
+                    $provider = CredentialProvider::memoize($assumeRoleProvider);
+                } catch (\Throwable $exception) {
+                    throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
                 }
             }
 
