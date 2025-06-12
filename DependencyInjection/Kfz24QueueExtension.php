@@ -38,11 +38,9 @@ class Kfz24QueueExtension extends Extension
         $loader->load('services.yaml');
 
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
-        echo "CONTENTS: " . PHP_EOL;
-        var_dump(file_get_contents($tokenFromEnv));
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
+        $webIdentityToken = file_get_contents($tokenFromEnv);
 
-        $provider = null;
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
@@ -56,37 +54,46 @@ class Kfz24QueueExtension extends Extension
                     'secret' => $client['secret_access_key']
                 ];
             } else {
-                if (!$provider) {
-                    try {
-                        $contents = file_get_contents($tokenFromEnv);
+                if (!$webIdentityToken) {
+                    throw new \Exception('Missing web identity token!');
+                }
 
-                        $assumeRoleProvider = new AssumeRoleWithWebIdentityCredentialProvider([
+                try {
+                    if (empty($credentials)) {
+                        $stsClient = new StsClient(['region' => $client['region'], 'version' => 'latest']);
+                        $result = $stsClient->assumeRoleWithWebIdentity([
                             'RoleArn' => $arnFromEnv,
-                            'WebIdentityTokenFile' => $tokenFromEnv,
-                            'SessionName' => 'aws-sdk-' . time(),
-                            'region' => $client['region'],
-                            'client' => new StsClient([
-                                'credentials' => false,
-                                'region' => $client['region'],
-                                'version' => 'latest',
-                            ]),
+                            'RoleSessionName' => sprintf("%s-%s", 'aws-sdk', time()),
+                            'WebIdentityToken' => $webIdentityToken,
                         ]);
 
-                        $credentials = CredentialProvider::memoize($assumeRoleProvider);
-                    } catch (\Throwable $exception) {
-                        throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
+                        if (!isset($result['Credentials'])) {
+                            throw new \Exception("Failed to assume role and retrieve credentials.");
+                        }
+
+                        $credentials = new Credentials($result['Credentials']['AccessKeyId'], $result['Credentials']['SecretAccessKey'], $result['Credentials']['SessionToken']);
                     }
+                } catch (\Throwable $exception) {
+                    throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
                 }
+
             }
 
-            $adapterDefinition = new Definition($adapterClass, [
-                [
-                    'region' => $client['region'],
-                    'credentials' => $credentials,
-                    'version' => $apiVersion,
-                    'endpoint' => $client['endpoint'],
-                ]
-            ]);
+            $providerCreds = [
+                'credentials' => $credentials
+            ];
+
+            $configurations = [
+                'region' => $client['region'],
+                'credentials' => $credentials,
+                'version' => 'latest',
+            ];
+
+            if ($this->containsKeys($client)) {
+                $configurations['endpoint'] =  $client['endpoint'];
+                $configurations['version'] = $apiVersion;
+            }
+            $adapterDefinition = new Definition($adapterClass, [$configurations]);
 
             $adapterDefinition->setPublic(false);
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
@@ -117,7 +124,7 @@ class Kfz24QueueExtension extends Extension
                         $s3DefinitionName,
                         $client['large_payload_client'],
                         $container,
-                        $credentials
+                        $providerCreds
                     );
 
                     $this->buildLargePayloadMessageExtensionDefinition(
@@ -163,32 +170,22 @@ class Kfz24QueueExtension extends Extension
      * @param string $definitionName
      * @param array $config
      * @param ContainerBuilder $container
-     * @param null|mixed $provider
+     * @param array $creds
+     * @return void
      */
-    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, $provider = null): void
+    private function buildS3ClientDefinition(string $definitionName, array $config, ContainerBuilder $container, array $creds): void
     {
         $usePathStyleEndpointEnvVar = $container->resolveEnvPlaceholders(
             $config['use_path_style_endpoint'],
             true
         );
 
-        $credentials = [];
-        if ($provider !== null) {
-            $credentials = $provider;
-        }
-
-        if ($this->containsKeys($config)) {
-            $credentials = [
-                'key' => $config['access_key'],
-                'secret' => $config['secret_access_key']
-            ];
-        }
 
         $s3ClientDefinition = new Definition(S3Client::class, [
             [
                 'region' => $config['region'],
                 'endpoint' => $config['endpoint'],
-                'credentials' => $credentials,
+                'credentials' => $creds['credentials'],
                 'use_path_style_endpoint' => ($usePathStyleEndpointEnvVar === 'true'),
                 'version' => '2006-03-01',
             ],
