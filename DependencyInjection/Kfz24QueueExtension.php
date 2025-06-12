@@ -61,7 +61,7 @@ class Kfz24QueueExtension extends Extension
                         $provider = $stsClient->assumeRoleWithWebIdentity([
                             'RoleArn' => 'arn:aws:iam::726569450381:role/k24-integration-2-default-search-service',
                             'RoleSessionName' => sprintf("%s-%s", 'aws-sdk', time()),
-                            'WebIdentityToken' => '/var/run/secrets/eks.amazonaws.com/serviceaccount/token',
+                            'WebIdentityToken' => file_get_contents('/var/run/secrets/eks.amazonaws.com/serviceaccount/token'),
                         ]);
 
                         if (!isset($provider['Credentials'])) {
