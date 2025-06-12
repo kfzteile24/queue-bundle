@@ -16,4 +16,5 @@ services:
     arguments:
       $certClient: "@kfz24.aws.cached_cert_client"
   kfz24.aws.cached_cert_client:
+    public: true
     class: Kfz24\QueueBundle\Client\Aws\CachedCertClient
