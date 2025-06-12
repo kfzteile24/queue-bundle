@@ -37,6 +37,7 @@ class Kfz24QueueExtension extends Extension
         $loader->load('services.yaml');
 
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
+        echo "CONTENTS: " . PHP_EOL;
         var_dump(file_get_contents($tokenFromEnv));
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
 
