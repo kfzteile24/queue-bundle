@@ -37,12 +37,11 @@ class Kfz24QueueExtension extends Extension
         $loader->load('services.yaml');
 
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
+        var_dump(file_get_contents($tokenFromEnv));
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
 
         $provider = null;
         foreach ($config['clients'] as $name => $client) {
-            var_dump($client);
-
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
