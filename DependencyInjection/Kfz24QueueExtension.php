@@ -2,6 +2,7 @@
 
 namespace Kfz24\QueueBundle\DependencyInjection;
 
+use Aws\Credentials\AssumeRoleWithWebIdentityCredentialProvider;
 use Aws\Credentials\Credentials;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
@@ -57,39 +58,35 @@ class Kfz24QueueExtension extends Extension
             } else {
                 if (!$provider) {
                     try {
-                        $stsClient = new StsClient(['region' => $client['region'], 'version' => 'latest']);
-                        $provider = $stsClient->assumeRoleWithWebIdentity([
-                            'RoleArn' => 'arn:aws:iam::726569450381:role/k24-integration-2-default-search-service',
-                            'RoleSessionName' => sprintf("%s-%s", 'aws-sdk', time()),
-                            'WebIdentityToken' => file_get_contents('/var/run/secrets/eks.amazonaws.com/serviceaccount/token'),
+                        $contents = file_get_contents($tokenFromEnv);
+
+                        $assumeRoleProvider = new AssumeRoleWithWebIdentityCredentialProvider([
+                            'RoleArn' => $arnFromEnv,
+                            'WebIdentityTokenFile' => $tokenFromEnv,
+                            'SessionName' => 'aws-sdk-' . time(),
+                            'region' => $client['region'],
+                            'client' => new StsClient([
+                                'credentials' => false,
+                                'region' => $client['region'],
+                                'version' => 'latest',
+                            ]),
                         ]);
 
-                        if (!isset($provider['Credentials'])) {
-                            throw new \Exception("Failed to assume role and retrieve credentials.");
-                        }
+                        $credentials = CredentialProvider::memoize($assumeRoleProvider);
                     } catch (\Throwable $exception) {
                         throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
                     }
                 }
             }
 
-            if ($client['type'] === 'sqs') {
-                $adapterDefinition = new SqsClient([
+            $adapterDefinition = new Definition($adapterClass, [
+                [
                     'region' => $client['region'],
-                    'version' => 'latest',
-                    'credentials' => new Credentials($provider['Credentials']['AccessKeyId'], $provider['Credentials']['SecretAccessKey'], $provider['Credentials']['SessionToken']),
+                    'credentials' => $credentials,
+                    'version' => $apiVersion,
                     'endpoint' => $client['endpoint'],
-                ]);
-            } else {
-                $adapterDefinition = new Definition($adapterClass, [
-                    [
-                        'region' => $client['region'],
-                        'credentials' => new Credentials($provider['Credentials']['AccessKeyId'], $provider['Credentials']['SecretAccessKey'], $provider['Credentials']['SessionToken']),
-                        'version' => $apiVersion,
-                        'endpoint' => $client['endpoint'],
-                    ]
-                ]);
-            }
+                ]
+            ]);
 
             $adapterDefinition->setPublic(false);
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
