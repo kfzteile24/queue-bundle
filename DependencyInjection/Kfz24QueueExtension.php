@@ -39,21 +39,20 @@ class Kfz24QueueExtension extends Extension
 
         $tokenFromEnv = getenv(CredentialProvider::ENV_TOKEN_FILE);
         $arnFromEnv = getenv(CredentialProvider::ENV_ARN);
-        $webIdentityToken = file_get_contents($tokenFromEnv);
+        $useWebToken = getenv(self::USE_WEB_TOKEN);
 
         foreach ($config['clients'] as $name => $client) {
             $clientType = $client['type'];
             $apiVersion = $container->getParameter(sprintf('kfz24.queue.%s.api_version', $clientType));
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
+            $credentials = [
+                'key' => $client['access_key'],
+                'secret' => $client['secret_access_key']
+            ];
 
-            $credentials = [];
-            if ($this->containsKeys($client)) {
-                $credentials = [
-                    'key' => $client['access_key'],
-                    'secret' => $client['secret_access_key']
-                ];
-            } else {
+            if ($useWebToken === '1') {
+                $webIdentityToken = file_get_contents($tokenFromEnv);
                 if (!$webIdentityToken) {
                     throw new \Exception('Missing web identity token!');
                 }
@@ -76,7 +75,6 @@ class Kfz24QueueExtension extends Extension
                 } catch (\Throwable $exception) {
                     throw new \Exception("[SQS-Bundle] Message: " . $exception->getMessage(). " Token is:" . $tokenFromEnv);
                 }
-
             }
 
             $providerCreds = [
