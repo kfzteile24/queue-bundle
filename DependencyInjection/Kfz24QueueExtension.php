@@ -10,8 +10,6 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader;
-use Aws\Sts\StsClient;
-use Aws\Credentials\CredentialProvider;
 
 /**
  * This is the class that loads and manages your bundle configuration.
@@ -38,43 +36,19 @@ class Kfz24QueueExtension extends Extension
             $adapterClass = $container->getParameter(sprintf('kfz24.queue.%s.adapter.class', $clientType));
             $clientClass = $container->getParameter(sprintf('kfz24.queue.%s.client.class', $clientType));
 
-            if (empty($client['role_based']) || empty($client['role_based']['web_identity_token_file'])) {
-                $adapterDefinition = new Definition($adapterClass, [
-                    [
-                        'region' => $client['region'],
-                        'endpoint' => $client['endpoint'],
-                        'credentials' => [
-                            'key' => $client['access_key'],
-                            'secret' => $client['secret_access_key']
-                        ],
-                        'version' => $apiVersion
-                    ]
-                ]);
-            } else {
-                $stsClient = new StsClient([
-                    'region'      => $client['region'],
-                    'version'     => $apiVersion,
+            $adapterDefinition = new Definition($adapterClass, [
+                [
+                    'region' => $client['region'],
+                    'endpoint' => $client['endpoint'],
                     'credentials' => [
-                        'webIdentityTokenFile' => $client['role_based']['web_identity_token_file'],
-                        'roleArn' => $client['role_based']['role_arn'],
-                        'roleSessionName' => $client['role_based']['session_name'],
-                    ]
-                ]);
-
-                $provider = CredentialProvider::assumeRoleWithWebIdentityCredentialProvider(['stsClient' => $stsClient]);
-                // Cache the results in a memoize function to avoid loading and parsing
-                // the ini file on every API operation
-                $provider = CredentialProvider::memoize($provider);
-                $adapterDefinition = new Definition($adapterClass, [
-                    [
-                        'region' => $client['region'],
-                        'version' => $apiVersion,
-                        'credentials' => $provider
-                    ]
-                ]);
-            }
-
+                        'key' => $client['access_key'],
+                        'secret' => $client['secret_access_key']
+                    ],
+                    'version' => $apiVersion
+                ]
+            ]);
             $adapterDefinition->setPublic(false);
+
             $adapterDefinitionName = sprintf('kfz24.queue.adapter.%s', $name);
             $container->setDefinition($adapterDefinitionName, $adapterDefinition);
 

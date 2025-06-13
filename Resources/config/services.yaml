@@ -12,7 +12,9 @@ parameters:
 services:
   kfz24.queue.message_validator:
     class: Aws\Sns\MessageValidator
+    public: true
     arguments:
       $certClient: "@kfz24.aws.cached_cert_client"
   kfz24.aws.cached_cert_client:
+    public: true
     class: Kfz24\QueueBundle\Client\Aws\CachedCertClient
